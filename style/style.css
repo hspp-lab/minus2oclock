@@ -1,0 +1,1284 @@
+/* =============================================================================
+   style.css : 白基調のミニマルデザイン + 全エフェクト/レイアウトパターン
+   -----------------------------------------------------------------------------
+   - 配色は白ベース。テキストは近黒。アクセントに淡いグレー/ブルーを少量。
+   - サイト演出は body[data-anim] / body[data-power] を見て切り替える。
+   - レイアウト/アスペクト比/object-fit はギャラリー要素の data 属性で分岐。
+   ============================================================================= */
+
+/* ---------------------------------------------------------------------------
+   デザイントークン（白基調）
+   --------------------------------------------------------------------------- */
+:root {
+    --bg: #ffffff;
+    --bg-soft: #fafafa;
+    --fg: #16161a;
+    --fg-soft: #6b6b73;
+    --line: #e6e6ea;
+    --accent: #2b6cff;
+    /* カーソル演出の色（白基調に合わせたモノトーン。RGB 個別値も用意して rgba に使う） */
+    --cursor-ink: #16161a;
+    --cursor-rgb: 22, 22, 26;
+    --shadow: 0 8px 30px rgba(20, 20, 30, 0.08);
+    --shadow-strong: 0 20px 60px rgba(20, 20, 30, 0.18);
+    --radius: 12px;
+    --gap: 16px;
+    --maxw: 1200px;
+
+    /* サイト演出の強度倍率（body[data-power] で上書き） */
+    --power-move: 8px;
+    --power-dur: 0.6s;
+    --power-glow: 0.25;
+
+    /* パララックス入力（script.js が更新） */
+    --px: 0;
+    --py: 0;
+}
+
+/* 強度による倍率上書き */
+body[data-power="1"] { --power-move: 6px;  --power-dur: 0.5s;  --power-glow: 0.18; }
+body[data-power="2"] { --power-move: 14px; --power-dur: 0.7s;  --power-glow: 0.30; }
+body[data-power="3"] { --power-move: 26px; --power-dur: 0.95s; --power-glow: 0.5; }
+
+/* ---------------------------------------------------------------------------
+   ベース
+   --------------------------------------------------------------------------- */
+* { box-sizing: border-box; }
+
+html, body {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background: var(--bg);
+    color: var(--fg);
+    /* 英数字は Helvetica/Arial、日本語は Noto Sans JP。
+       先頭の欧文フォントは日本語グリフを持たないため、日本語は自動で Noto Sans JP が担当する。 */
+    font-family: "Helvetica Neue", Arial, "Noto Sans JP",
+        "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+    letter-spacing: 0.03em;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+a { color: inherit; text-decoration: none; }
+
+#app {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* ---------------------------------------------------------------------------
+   画像保存・保存導線の抑止（常時有効）
+   OS のスクショや開発者ツール経由は防げないが、導線を可能な限り塞ぐ。
+   --------------------------------------------------------------------------- */
+body {
+    /* テキスト選択禁止（選択→保存の導線を消す） */
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    /* スマホの長押しメニュー（画像保存ダイアログ）を抑止 */
+    -webkit-touch-callout: none;
+}
+img,
+.gallery-cell,
+.bg-slot,
+.unit-stage {
+    /* 画像のドラッグ保存を禁止 */
+    -webkit-user-drag: none;
+    user-drag: none;
+    -webkit-touch-callout: none;
+    pointer-events: auto;
+}
+
+/* 印刷（Ctrl+P）でのページ保存を抑止：印刷時は内容を隠す */
+@media print {
+    body * { visibility: hidden !important; }
+    body::after {
+        content: "印刷はできません";
+        visibility: visible;
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        color: #000;
+        background: #fff;
+    }
+}
+
+/* ---------------------------------------------------------------------------
+   ヘッダー / ナビ
+   --------------------------------------------------------------------------- */
+.site-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 18px 28px;
+    background: rgba(255, 255, 255, 0.78);
+    backdrop-filter: saturate(1.2) blur(12px);
+    border-bottom: 1px solid var(--line);
+}
+
+.site-brand {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+}
+
+.site-nav {
+    display: flex;
+    gap: 28px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+/* カテゴリ（ドロップダウン親） */
+.nav-group { position: relative; }
+
+/* カテゴリ見出しトグル */
+.nav-group-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font: inherit;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--fg-soft);
+    padding: 6px 2px;
+    transition: color 0.25s ease;
+}
+
+/* 開閉インジケータ（▾） */
+.nav-group-toggle::after {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-right: 1.5px solid currentColor;
+    border-bottom: 1.5px solid currentColor;
+    transform: rotate(45deg) translateY(-1px);
+    transition: transform 0.25s ease;
+}
+
+.nav-group-toggle:hover { color: var(--fg); }
+.nav-group-toggle.active { color: var(--fg); }
+.nav-group.open .nav-group-toggle { color: var(--fg); }
+.nav-group.open .nav-group-toggle::after { transform: rotate(-135deg) translateY(-1px); }
+
+/* ドロップダウン本体 */
+.nav-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    min-width: 160px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 8px;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    opacity: 0;
+    transform: translateY(-6px);
+    pointer-events: none;
+    transition: opacity 0.22s ease, transform 0.22s ease;
+    z-index: 60;
+}
+
+.nav-group.open .nav-dropdown {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+.nav-link {
+    position: relative;
+    display: block;
+    font-size: 14px;
+    color: var(--fg-soft);
+    padding: 8px 10px;
+    border-radius: 8px;
+    transition: color 0.2s ease, background 0.2s ease;
+}
+
+.nav-link:hover { color: var(--fg); background: var(--bg-soft); }
+.nav-link.active { color: var(--fg); background: var(--bg-soft); }
+
+/* ---------------------------------------------------------------------------
+   サイト名エフェクト（時計スロット）
+   --------------------------------------------------------------------------- */
+.clock {
+    display: inline-flex;
+    align-items: center;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+}
+
+.clock-sign { margin-right: 1px; }
+
+.clock-group { display: inline-flex; }
+
+.clock-digit {
+    display: inline-block;
+    min-width: 0.62em;
+    text-align: center;
+    overflow: hidden;
+}
+
+.clock-colon { margin: 0 1px; opacity: 0.6; }
+
+/* 桁が変わったときのスロット上昇アニメーション */
+.clock-digit.tick {
+    animation: slot-rise 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes slot-rise {
+    0% { transform: translateY(0.7em); opacity: 0; }
+    60% { opacity: 1; }
+    100% { transform: translateY(0); opacity: 1; }
+}
+
+/* ---------------------------------------------------------------------------
+   メイン / ページ共通
+   --------------------------------------------------------------------------- */
+.site-main {
+    flex: 1;
+    width: 100%;
+    max-width: var(--maxw);
+    margin: 0 auto;
+    padding: 40px 28px 80px;
+}
+
+.page { width: 100%; }
+
+/* ---------------------------------------------------------------------------
+   トップページ
+   --------------------------------------------------------------------------- */
+.page-top {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* site-main の上下 padding（上40/下80）を打ち消し、画面に対して縦中央に置く。
+       ヘッダー分は sticky なので実質ビューポート高からヘッダー高を引いた領域の中央になる。 */
+    min-height: calc(100vh - 200px);
+    margin: -40px 0 -80px;   /* site-main の非対称 padding を相殺 */
+}
+
+.hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.hero-title {
+    /* 常に一列。長い文字やスペースでも折り返さない。
+       画面幅に応じてサイズを縮め（vw 基準）、はみ出しを防ぐ。 */
+    font-size: clamp(28px, 12vw, 140px);
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    margin: 0;
+    line-height: 1;
+    white-space: nowrap;
+    max-width: 100%;
+}
+
+.hero-sub {
+    margin-top: 18px;
+    font-size: 14px;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    color: var(--fg-soft);
+}
+/* welcome が単独（サイト名非表示）のときは上マージンで中央がずれないよう打ち消す */
+.hero-sub:first-child {
+    margin-top: 0;
+}
+
+/* ---------------------------------------------------------------------------
+   ヒーローのホバー時テキストエフェクト（[data-hover]）
+   --------------------------------------------------------------------------- */
+[data-hover] {
+    display: inline-block;
+    cursor: default;
+    transition: transform 0.3s ease, letter-spacing 0.3s ease, color 0.3s ease, text-shadow 0.3s ease;
+}
+
+/* 1: glow（発光＋わずかに拡大） */
+[data-hover="glow"]:hover {
+    transform: scale(1.04);
+    text-shadow: 0 0 12px rgba(var(--cursor-rgb), 0.35), 0 0 28px rgba(var(--cursor-rgb), 0.2);
+}
+
+/* 2: glitch（RGBずれ・ノイズ） */
+[data-hover="glitch"] { position: relative; }
+[data-hover="glitch"]::before,
+[data-hover="glitch"]::after {
+    content: attr(data-text);
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    opacity: 0;
+    pointer-events: none;
+}
+[data-hover="glitch"]:hover::before {
+    color: rgba(255, 0, 80, 0.85);
+    opacity: 1;
+    animation: hover-glitch-1 0.5s steps(2, end) infinite;
+}
+[data-hover="glitch"]:hover::after {
+    color: rgba(0, 180, 255, 0.85);
+    opacity: 1;
+    animation: hover-glitch-2 0.6s steps(2, end) infinite;
+}
+@keyframes hover-glitch-1 {
+    0%,100% { transform: translate(0,0); clip-path: inset(0 0 55% 0); }
+    33% { transform: translate(-3px,-1px); clip-path: inset(30% 0 20% 0); }
+    66% { transform: translate(2px,1px); clip-path: inset(10% 0 60% 0); }
+}
+@keyframes hover-glitch-2 {
+    0%,100% { transform: translate(0,0); clip-path: inset(50% 0 10% 0); }
+    33% { transform: translate(3px,1px); clip-path: inset(10% 0 60% 0); }
+    66% { transform: translate(-2px,-1px); clip-path: inset(35% 0 30% 0); }
+}
+
+/* 3: wave（文字が1つずつ波打つ） */
+[data-hover="wave"] .hover-char {
+    display: inline-block;
+    transition: transform 0.2s ease;
+}
+[data-hover="wave"]:hover .hover-char {
+    animation: hover-wave 0.8s ease-in-out infinite;
+    animation-delay: calc(var(--ci, 0) * 60ms);
+}
+@keyframes hover-wave {
+    0%, 100% { transform: translateY(0); }
+    30% { transform: translateY(-0.28em); }
+    60% { transform: translateY(0.1em); }
+}
+
+/* 4: shuffle（文字がランダム記号に置換→戻る。JS で文字を差し替え、色だけ添える） */
+[data-hover="shuffle"] .hover-char {
+    display: inline-block;
+}
+[data-hover="shuffle"]:hover .hover-char {
+    color: var(--fg);
+}
+
+/* 5: spread（文字間隔が広がり色が薄くなる） */
+[data-hover="spread"]:hover {
+    letter-spacing: 0.5em;
+    color: var(--fg-soft);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    [data-hover="glitch"]:hover::before,
+    [data-hover="glitch"]:hover::after { animation: none; opacity: 0; }
+    [data-hover="wave"]:hover .hover-char { animation: none; }
+}
+
+/* ---------------------------------------------------------------------------
+   情報ページ（about / special_thx）
+   --------------------------------------------------------------------------- */
+.page-info { display: flex; justify-content: center; }
+
+.info-wrap {
+    width: 100%;
+    max-width: 720px;
+    padding: 20px 0;
+}
+
+.info-heading {
+    font-size: clamp(28px, 5vw, 44px);
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    margin: 0 0 24px;
+}
+
+.info-paragraph {
+    font-size: 16px;
+    color: var(--fg);
+    margin: 0 0 16px;
+}
+
+/* 名前一覧（ / 区切り、見切れたら折り返す） */
+.info-names {
+    font-size: 16px;
+    color: var(--fg-soft);
+    line-height: 2;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+}
+
+/* プロフィール画像（正方形） */
+.info-profile {
+    width: 140px;
+    height: 140px;
+    margin: 0 0 24px;
+    overflow: hidden;
+    border-radius: 0;        /* 正方形（角丸なし） */
+    background: var(--bg-soft);
+    box-shadow: var(--shadow);
+}
+.info-profile-img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;       /* 正方形枠に合わせてトリミング */
+}
+
+/* SNSリンク（モノクロアイコン） */
+.info-social {
+    display: flex;
+    gap: 16px;
+    margin-top: 28px;
+}
+.info-social-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    color: var(--fg-soft);   /* モノクロ（currentColor で SVG を塗る） */
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    transition: color 0.2s ease, border-color 0.2s ease, transform 0.2s ease, background 0.2s ease;
+}
+.info-social-link svg {
+    width: 18px;
+    height: 18px;
+    display: block;
+}
+.info-social-link:hover {
+    color: var(--fg);
+    border-color: var(--fg);
+    background: var(--bg-soft);
+    transform: translateY(-2px);
+}
+
+/* ---------------------------------------------------------------------------
+   ギャラリー：一覧レイアウト
+   --------------------------------------------------------------------------- */
+.gallery { width: 100%; }
+
+/* --- layout 0: grid --- */
+.gallery.layout-grid {
+    display: grid;
+    grid-template-columns: repeat(var(--columns, 3), 1fr);
+    gap: var(--gap);
+}
+
+/* --- layout 1: masonry（高さ可変を CSS columns で近似）--- */
+.gallery.layout-masonry {
+    column-count: var(--columns, 3);
+    column-gap: var(--gap);
+}
+.gallery.layout-masonry .gallery-cell {
+    display: inline-block;
+    width: 100%;
+    margin: 0 0 var(--gap);
+    break-inside: avoid;
+}
+
+/* --- layout 2: justified（行内で高さ揃え・幅可変を flex で近似）--- */
+.gallery.layout-justified {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--gap);
+}
+.gallery.layout-justified .gallery-cell {
+    flex: 1 1 240px;
+    height: 220px;
+}
+.gallery.layout-justified .gallery-cell img { height: 100%; }
+
+/* --- layout 3: carousel（横スクロール）--- */
+.gallery.layout-carousel {
+    display: flex;
+    gap: var(--gap);
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    padding-bottom: 12px;
+}
+.gallery.layout-carousel .gallery-cell {
+    flex: 0 0 min(70vw, 420px);
+    scroll-snap-align: center;
+}
+
+/* セル共通 */
+.gallery-cell {
+    position: relative;
+    margin: 0;
+    overflow: hidden;
+    border-radius: 0;        /* 画像の四隅は角丸にしない */
+    background: var(--bg-soft);
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+        box-shadow 0.4s ease;
+}
+
+.gallery-cell img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.gallery-cell:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-strong);
+}
+.gallery-cell:hover img { transform: scale(1.06); }
+
+/* 画像モノクロ化（imgcolor:1）。overview / unit 共通。 */
+.img-mono {
+    filter: grayscale(1);
+}
+
+/* --- アスペクト比（data-aspect）--- */
+/* grid / masonry / carousel でセルの比率を決める。justified は高さ固定なので除外 */
+.gallery.layout-grid[data-aspect="1"] .gallery-cell,
+.gallery.layout-carousel[data-aspect="1"] .gallery-cell {
+    aspect-ratio: 1 / 1;
+}
+.gallery.layout-grid[data-aspect="2"] .gallery-cell,
+.gallery.layout-carousel[data-aspect="2"] .gallery-cell {
+    aspect-ratio: 2.35 / 1;
+}
+/* aspect 0（比率指定なし）は grid/carousel でも画像本来比率で見せる */
+.gallery.layout-grid[data-aspect="0"] .gallery-cell,
+.gallery.layout-carousel[data-aspect="0"] .gallery-cell {
+    aspect-ratio: auto;
+}
+.gallery.layout-grid[data-aspect="0"] .gallery-cell img,
+.gallery.layout-carousel[data-aspect="0"] .gallery-cell img {
+    height: auto;
+}
+
+/* ---------------------------------------------------------------------------
+   ギャラリー：単体表示（unit）
+   --------------------------------------------------------------------------- */
+body.unit-open { overflow: hidden; }
+
+.unit-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity var(--duration, 500ms) ease;
+}
+
+.unit-overlay.show { opacity: 1; }
+
+/* modal: 背景暗転 */
+.unit-modal { background: rgba(255, 255, 255, 0.86); backdrop-filter: blur(8px); }
+/* fullscreen: 白で全面 */
+.unit-fullscreen { background: var(--bg); }
+
+.unit-stage {
+    max-width: 92vw;
+    max-height: 86vh;
+    box-shadow: var(--shadow-strong);
+    border-radius: 0;        /* 画像の四隅は角丸にしない */
+    overflow: hidden;
+    background: #fff;
+}
+.unit-fullscreen .unit-stage {
+    max-width: 100vw;
+    max-height: 100vh;
+    box-shadow: none;
+    border-radius: 0;
+}
+
+.unit-img {
+    display: block;
+    max-width: 92vw;
+    max-height: 86vh;
+    object-fit: contain;   /* 画像は歪ませない（比率保持） */
+}
+.unit-fullscreen .unit-img { max-width: 100vw; max-height: 100vh; }
+
+/* 画像サイズの統一（unit.imgsize_unify）。画像は歪めず片方の辺だけ揃える。
+   統一値は CSS 変数で調整可能。画面からはみ出さないよう max で保護する。 */
+:root {
+    --unit-w: min(80vw, 1000px);  /* 横幅統一時の共通横幅 */
+    --unit-h: 82vh;               /* 縦統一時の共通高さ */
+}
+
+/* 1: 横幅を統一（高さは比率なり可変） */
+.unit-stage[data-unify="1"] .unit-img {
+    width: var(--unit-w);
+    height: auto;
+    max-width: 92vw;
+    max-height: 86vh;
+}
+.unit-fullscreen .unit-stage[data-unify="1"] .unit-img {
+    max-width: 100vw;
+    max-height: 100vh;
+}
+
+/* 2: 縦を統一（横幅は比率なり可変） */
+.unit-stage[data-unify="2"] .unit-img {
+    height: var(--unit-h);
+    width: auto;
+    max-width: 92vw;
+    max-height: 86vh;
+}
+.unit-fullscreen .unit-stage[data-unify="2"] .unit-img {
+    max-width: 100vw;
+    max-height: 100vh;
+}
+
+/* overview の比率に合わせる（unit.match_overview_aspect=1）。
+   stage を固定比率にし、img を cover で埋める（画像はトリミングされる）。 */
+.unit-stage[data-aspect="1"] {
+    width: min(86vw, 80vh);
+    height: min(86vw, 80vh);
+    aspect-ratio: 1 / 1;
+}
+.unit-stage[data-aspect="2"] {
+    width: min(90vw, 188vh);
+    aspect-ratio: 2.35 / 1;
+}
+/* aspect 0（比率指定なし）は枠を作らず画像本来比率で表示 */
+.unit-stage[data-aspect="1"] .unit-img,
+.unit-stage[data-aspect="2"] .unit-img {
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    max-height: none;
+    object-fit: cover;
+}
+
+/* 遷移アニメ */
+.trans-fade .unit-img.enter-fade { animation: u-fade var(--duration, 500ms) ease; }
+.trans-slide .unit-img.enter-slide-left { animation: u-slide-l var(--duration, 500ms) cubic-bezier(0.22,1,0.36,1); }
+.trans-slide .unit-img.enter-slide-right { animation: u-slide-r var(--duration, 500ms) cubic-bezier(0.22,1,0.36,1); }
+
+@keyframes u-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes u-slide-l { from { transform: translateX(40px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+@keyframes u-slide-r { from { transform: translateX(-40px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+/* 操作系ボタン */
+.unit-close, .unit-nav {
+    position: absolute;
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.9);
+    color: var(--fg);
+    cursor: pointer;
+    border-radius: 50%;
+    transition: transform 0.2s ease, background 0.2s ease;
+}
+.unit-close {
+    top: 22px; right: 22px;
+    width: 44px; height: 44px;
+    font-size: 24px; line-height: 1;
+}
+.unit-nav {
+    top: 50%;
+    transform: translateY(-50%);
+    width: 52px; height: 52px;
+    font-size: 30px; line-height: 1;
+}
+.unit-prev { left: 18px; }
+.unit-next { right: 18px; }
+.unit-close:hover, .unit-nav:hover {
+    background: #fff;
+    transform: scale(1.08);
+}
+.unit-nav:hover { transform: translateY(-50%) scale(1.08); }
+
+/* ---------------------------------------------------------------------------
+   出現アニメーション（anim-item + in-view）
+   ベースは fade。type によって出方を差し替える。
+   --------------------------------------------------------------------------- */
+.anim-item {
+    opacity: 1;
+    transform: none;
+}
+
+/* 演出が none 以外なら初期状態を隠す */
+body:not([data-anim="none"]) .anim-item {
+    opacity: 0;
+    will-change: transform, opacity, filter;
+}
+body:not([data-anim="none"]) .anim-item.in-view {
+    opacity: 1;
+}
+
+/* type: fade（下から浮上） */
+body[data-anim="fade"] .anim-item {
+    transform: translateY(calc(var(--power-move) * 1.4));
+    transition: opacity var(--power-dur) ease, transform var(--power-dur) cubic-bezier(0.22,1,0.36,1);
+    /* グリッド内はインデックスで少しずつ遅延 */
+    transition-delay: calc(min(var(--i, 0) * 40ms, 600ms));
+}
+body[data-anim="fade"] .anim-item.in-view { transform: translateY(0); }
+
+/* type: glitch（RGBずれ + クリップで登場） */
+body[data-anim="glitch"] .anim-item {
+    transform: translateY(var(--power-move));
+    transition: opacity var(--power-dur) steps(6, end), transform var(--power-dur) steps(6, end);
+    transition-delay: calc(min(var(--i, 0) * 30ms, 500ms));
+}
+body[data-anim="glitch"] .anim-item.in-view {
+    transform: translateY(0);
+    animation: glitch-in calc(var(--power-dur) * 0.9) steps(2, end);
+}
+@keyframes glitch-in {
+    0%   { clip-path: inset(0 0 90% 0); filter: hue-rotate(0deg); text-shadow: 2px 0 rgba(255,0,80,.6), -2px 0 rgba(0,180,255,.6); }
+    20%  { clip-path: inset(40% 0 30% 0); transform: translateX(-3px); }
+    40%  { clip-path: inset(10% 0 60% 0); transform: translateX(3px); }
+    60%  { clip-path: inset(70% 0 5% 0); transform: translateX(-2px); }
+    80%  { clip-path: inset(20% 0 40% 0); transform: translateX(1px); text-shadow: 1px 0 rgba(255,0,80,.4), -1px 0 rgba(0,180,255,.4); }
+    100% { clip-path: inset(0 0 0 0); transform: translateX(0); text-shadow: none; }
+}
+
+/* type: parallax（奥行き。マウス連動で全体がわずかに動く） */
+body[data-anim="parallax"] .anim-item {
+    transform: translateY(var(--power-move));
+    transition: opacity var(--power-dur) ease, transform var(--power-dur) cubic-bezier(0.22,1,0.36,1);
+    transition-delay: calc(min(var(--i, 0) * 45ms, 700ms));
+}
+body[data-anim="parallax"] .anim-item.in-view {
+    transform: translate(
+        calc(var(--px) * var(--power-move) * 0.6),
+        calc(var(--py) * var(--power-move) * 0.6)
+    );
+    transition: transform 0.25s ease-out, opacity var(--power-dur) ease;
+}
+body[data-anim="parallax"] .gallery-cell {
+    transform: translate(
+        calc(var(--px) * var(--power-move)),
+        calc(var(--py) * var(--power-move))
+    );
+}
+
+/* type: ripple（波紋状に連鎖出現 + クリックで波紋） */
+body[data-anim="ripple"] .anim-item {
+    transform: scale(0.94);
+    transition: opacity var(--power-dur) ease, transform var(--power-dur) cubic-bezier(0.34,1.56,0.64,1);
+    transition-delay: calc(min(var(--i, 0) * 55ms, 800ms));
+}
+body[data-anim="ripple"] .anim-item.in-view { transform: scale(1); }
+
+.ripple-fx {
+    position: fixed;
+    width: 10px; height: 10px;
+    margin: -5px 0 0 -5px;
+    border-radius: 50%;
+    background: rgba(43, 108, 255, calc(var(--power-glow) + 0.1));
+    pointer-events: none;
+    z-index: 200;
+    animation: ripple-spread 0.7s ease-out forwards;
+}
+@keyframes ripple-spread {
+    0% { transform: scale(1); opacity: 0.6; }
+    100% { transform: scale(24); opacity: 0; }
+}
+
+/* type: cosmic（星屑背景 + 光の粒から集約） */
+body[data-anim="cosmic"] {
+    background:
+        radial-gradient(1200px 600px at 50% -10%, rgba(43,108,255,var(--power-glow)) 0%, rgba(255,255,255,0) 60%),
+        var(--bg);
+}
+body[data-anim="cosmic"] .anim-item {
+    transform: translateY(var(--power-move)) scale(0.98);
+    filter: blur(6px);
+    transition: opacity var(--power-dur) ease, transform var(--power-dur) cubic-bezier(0.22,1,0.36,1), filter var(--power-dur) ease;
+    transition-delay: calc(min(var(--i, 0) * 50ms, 700ms));
+}
+body[data-anim="cosmic"] .anim-item.in-view {
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+}
+
+.cosmic-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+.cosmic-star {
+    position: absolute;
+    width: var(--size, 2px);
+    height: var(--size, 2px);
+    border-radius: 50%;
+    background: rgba(43, 108, 255, 0.55);
+    box-shadow: 0 0 6px rgba(43, 108, 255, 0.5);
+    opacity: 0;
+    animation: twinkle var(--dur, 3s) ease-in-out var(--delay, 0s) infinite;
+}
+@keyframes twinkle {
+    0%, 100% { opacity: 0; transform: scale(0.6); }
+    50% { opacity: 0.9; transform: scale(1); }
+}
+/* cosmic 時は中身をパーティクル層より前面に */
+body[data-anim="cosmic"] #app { position: relative; z-index: 1; }
+
+/* ---------------------------------------------------------------------------
+   マウスカーソルエフェクト（cursor_effect）
+   body[data-cursor] で種別を切り替える。標準カーソルは種別ありのとき隠す。
+   --------------------------------------------------------------------------- */
+/* 追従要素の層（最前面・クリックを透過） */
+.cursor-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    pointer-events: none;
+    overflow: visible;
+}
+
+/* ring/glow/magnetic 以外でも標準カーソルは残す。演出ありのときだけ隠す */
+body[data-cursor="ring"],
+body[data-cursor="trail"],
+body[data-cursor="glow"],
+body[data-cursor="magnetic"],
+body[data-cursor="particles"] {
+    cursor: none;
+}
+/* リンク等の上でも標準カーソルを隠す（演出で表現するため） */
+body[data-cursor="ring"] a, body[data-cursor="ring"] button,
+body[data-cursor="magnetic"] a, body[data-cursor="magnetic"] button,
+body[data-cursor="glow"] a, body[data-cursor="glow"] button {
+    cursor: none;
+}
+
+/* メイン要素の共通位置（transform は JS が指定） */
+.cursor-main {
+    position: absolute;
+    top: 0;
+    left: 0;
+    will-change: transform;
+}
+
+/* --- cursor 1: ring（リング） --- */
+body[data-cursor="ring"] .cursor-main {
+    width: calc(28px * var(--scale, 1));
+    height: calc(28px * var(--scale, 1));
+    border: 1.5px solid var(--cursor-ink);
+    border-radius: 50%;
+    background: rgba(var(--cursor-rgb), 0.05);
+    transition: width 0.25s ease, height 0.25s ease, background 0.25s ease, border-color 0.25s ease;
+}
+body[data-cursor="ring"] .cursor-main.hover {
+    width: calc(52px * var(--scale, 1));
+    height: calc(52px * var(--scale, 1));
+    background: rgba(var(--cursor-rgb), 0.1);
+    border-color: var(--cursor-ink);
+}
+
+/* --- cursor 2: trail（軌跡） --- */
+body[data-cursor="trail"] .cursor-trail-dot {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: calc(10px * var(--scale, 1));
+    height: calc(10px * var(--scale, 1));
+    margin: 0;
+    border-radius: 50%;
+    background: var(--cursor-ink);
+    will-change: transform;
+}
+
+/* --- cursor 3: glow（ソフトグロー） --- */
+body[data-cursor="glow"] .cursor-main {
+    width: calc(24px * var(--scale, 1));
+    height: calc(24px * var(--scale, 1));
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(var(--cursor-rgb),0.45) 0%, rgba(var(--cursor-rgb),0) 70%);
+    filter: blur(4px);
+    box-shadow: 0 0 30px 12px rgba(var(--cursor-rgb), calc(var(--power-glow, 0.3) + 0.05));
+    transition: transform 0.1s linear, box-shadow 0.3s ease;
+}
+body[data-cursor="glow"] .cursor-main.hover {
+    box-shadow: 0 0 48px 20px rgba(var(--cursor-rgb), calc(var(--power-glow, 0.3) + 0.15));
+}
+
+/* --- cursor 4: magnetic（吸着・変形） --- */
+/* mix-blend-mode: difference により、白の円が背景を反転させモノトーンで映える */
+body[data-cursor="magnetic"] .cursor-main {
+    width: calc(16px * var(--scale, 1));
+    height: calc(16px * var(--scale, 1));
+    border-radius: 50%;
+    background: #fff;
+    mix-blend-mode: difference;
+    transition: width 0.3s cubic-bezier(0.22,1,0.36,1), height 0.3s cubic-bezier(0.22,1,0.36,1), border-radius 0.3s ease, background 0.3s ease;
+}
+body[data-cursor="magnetic"] .cursor-main.hover {
+    width: calc(64px * var(--scale, 1));
+    height: calc(64px * var(--scale, 1));
+    border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+    background: #fff;
+    animation: blob 4s ease-in-out infinite;
+}
+@keyframes blob {
+    0%, 100% { border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%; }
+    50% { border-radius: 70% 30% 40% 60% / 60% 40% 60% 40%; }
+}
+
+/* --- cursor 5: particles（粒子） --- */
+.cursor-particle {
+    position: absolute;
+    width: calc(7px * var(--s, 1));
+    height: calc(7px * var(--s, 1));
+    margin: calc(-3.5px * var(--s, 1)) 0 0 calc(-3.5px * var(--s, 1));
+    border-radius: 50%;
+    background: var(--cursor-ink);
+    will-change: transform, opacity;
+    animation: particle-fly 0.7s ease-out forwards;
+}
+@keyframes particle-fly {
+    0% { transform: translate(0, 0) scale(1); opacity: 0.9; }
+    100% { transform: translate(var(--dx, 0), var(--dy, 0)) scale(0); opacity: 0; }
+}
+
+/* モバイル（粗いポインタ）では標準カーソルに戻す */
+@media (pointer: coarse) {
+    body[data-cursor] { cursor: auto; }
+    .cursor-layer { display: none; }
+}
+
+/* ---------------------------------------------------------------------------
+   body 背景スライドショー（body_bg_effect）
+   body[data-bg] で切替演出を分岐。トップページ表示中のみ存在する。
+   --------------------------------------------------------------------------- */
+.bg-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 0;          /* #app より背面 */
+    overflow: hidden;
+    background: var(--bg);
+}
+/* 背景レイヤーがあるとき、コンテンツを前面へ */
+body[data-bg]:not([data-bg="none"]) #app { position: relative; z-index: 1; }
+/* ヘッダーの半透明背景は残しつつ、トップでは背景画像を透かす */
+body[data-bg]:not([data-bg="none"]) .page-top { background: transparent; }
+
+/* 画像スロット（重ねて opacity 切替に使う） */
+.bg-slot {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    opacity: 0;
+    /* GPU 合成レイヤーに乗せ、opacity 変化のペイントをメインスレッドから外す
+       （＝カーソル追従のカクつきを防ぐ） */
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    will-change: opacity;
+}
+
+/* 白オーバーレイ（前面テキストの視認性確保） */
+.bg-overlay {
+    position: absolute;
+    inset: 0;
+    background: #fff;
+    opacity: var(--bg-overlay, 0.35);
+    pointer-events: none;
+}
+
+/* 白フラッシュ（flash 演出専用） */
+.bg-flash {
+    position: absolute;
+    inset: 0;
+    background: #fff;
+    opacity: 0;
+    pointer-events: none;
+}
+.bg-flash.fire { animation: bg-flash-fire 0.18s ease-out; }
+@keyframes bg-flash-fire {
+    0% { opacity: 0.9; }
+    100% { opacity: 0; }
+}
+
+/* --- bg 1: cut（瞬間切替。フェードなし） --- */
+body[data-bg="cut"] .bg-slot { transition: none; }
+body[data-bg="cut"] .bg-slot.show { opacity: 1; }
+
+/* --- bg 2: fade（クロスフェード） --- */
+body[data-bg="fade"] .bg-slot { transition: opacity 0.6s ease; }
+body[data-bg="fade"] .bg-slot.show { opacity: 1; }
+
+/* --- bg 3: zoom（Ken Burns：ゆっくりズームしながらフェード） --- */
+body[data-bg="zoom"] .bg-slot {
+    transition: opacity 0.8s ease;
+    transform: scale(1);
+}
+body[data-bg="zoom"] .bg-slot.show {
+    opacity: 1;
+    animation: bg-kenburns 8s ease-out forwards;
+}
+@keyframes bg-kenburns {
+    from { transform: scale(1); }
+    to { transform: scale(1.15); }
+}
+
+/* --- bg 4: glitch（切替時にRGBずれ/ノイズ） --- */
+body[data-bg="glitch"] .bg-slot { transition: opacity 0.25s steps(3, end); }
+body[data-bg="glitch"] .bg-slot.show {
+    opacity: 1;
+    animation: bg-glitch 0.3s steps(2, end);
+}
+@keyframes bg-glitch {
+    0%   { filter: hue-rotate(0deg) saturate(2); transform: translateX(-6px); clip-path: inset(0 0 60% 0); }
+    30%  { transform: translateX(6px); clip-path: inset(40% 0 20% 0); }
+    60%  { transform: translateX(-3px); clip-path: inset(10% 0 50% 0); }
+    100% { filter: none; transform: translateX(0); clip-path: inset(0 0 0 0); }
+}
+
+/* --- bg 5: flash（白フラッシュを挟むバチバチ切替） --- */
+body[data-bg="flash"] .bg-slot { transition: opacity 0.08s linear; }
+body[data-bg="flash"] .bg-slot.show { opacity: 1; }
+
+/* --- bg 6: slide（横からスライドイン） --- */
+body[data-bg="slide"] .bg-slot {
+    transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.22,1,0.36,1);
+    transform: translateX(6%);
+}
+body[data-bg="slide"] .bg-slot.show {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+/* reduced-motion：高速明滅系を穏やかに */
+@media (prefers-reduced-motion: reduce) {
+    body[data-bg="flash"] .bg-flash { display: none; }
+    .bg-slot { transition: opacity 0.6s ease !important; animation: none !important; }
+}
+
+/* ---------------------------------------------------------------------------
+   ローディング画面（背景画像プリロード中に表示）
+   --------------------------------------------------------------------------- */
+.loader {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    background: var(--bg);
+    opacity: 1;
+    transition: opacity 0.6s ease;
+}
+.loader.done {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.loader-inner {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 進捗リング（--pct を conic-gradient に反映） */
+.loader-ring {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background:
+        conic-gradient(var(--accent) calc(var(--pct, 0) * 1%), var(--line) 0);
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 6px), #000 calc(100% - 5px));
+            mask: radial-gradient(farthest-side, transparent calc(100% - 6px), #000 calc(100% - 5px));
+    transition: background 0.2s linear;
+}
+
+/* 内側の緩やかな回転スピナー（動きを添える） */
+.loader-inner::before {
+    content: "";
+    position: absolute;
+    inset: 14px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    border-top-color: var(--accent);
+    opacity: 0.5;
+    animation: loader-spin 0.9s linear infinite;
+}
+@keyframes loader-spin { to { transform: rotate(360deg); } }
+
+.loader-count {
+    position: relative;
+    z-index: 1;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--fg);
+    font-variant-numeric: tabular-nums;
+}
+.loader-unit { font-size: 13px; color: var(--fg-soft); margin-left: 1px; }
+
+/* --- 2: bar（横棒プログレスバー） --- */
+.loader-bar-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+}
+.loader-bar {
+    position: relative;
+    width: min(60vw, 360px);
+    height: 4px;
+    background: var(--line);
+    border-radius: 2px;
+    overflow: hidden;
+}
+.loader-bar-fill {
+    position: absolute;
+    inset: 0;
+    width: calc(var(--pct, 0) * 1%);
+    background: var(--accent);
+    transition: width 0.2s ease;
+}
+
+/* --- 3: counter（大きな数字のみ） --- */
+.loader-big {
+    font-size: clamp(64px, 16vw, 160px);
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    color: var(--fg);
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+.loader-big .loader-unit { font-size: 0.3em; color: var(--fg-soft); }
+
+/* --- 4: tiles（画像タイルが埋まっていく） --- */
+.loader-tiles {
+    display: grid;
+    /* 列数は JS が --cols にセット（総数から正方形に近づける） */
+    grid-template-columns: repeat(var(--cols, 6), 1fr);
+    width: min(60vw, 360px);
+    aspect-ratio: 1 / 1;
+    gap: 5px;
+}
+.loader-tile {
+    background: var(--line);
+    border-radius: 2px;
+    transform: scale(0.8);
+    opacity: 0.4;
+    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), opacity 0.3s ease, background 0.3s ease;
+}
+.loader-tile.filled {
+    background: var(--accent);
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* --- 5: glitch（サイト名グリッチ） --- */
+.loader-glitch {
+    position: relative;
+    font-size: clamp(40px, 10vw, 90px);
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    color: var(--fg);
+    line-height: 1;
+}
+.loader-glitch::before,
+.loader-glitch::after {
+    content: attr(data-text);
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    overflow: hidden;
+}
+.loader-glitch::before {
+    color: rgba(255, 0, 80, 0.8);
+    animation: loader-glitch-1 1.6s infinite steps(2, end);
+}
+.loader-glitch::after {
+    color: rgba(0, 180, 255, 0.8);
+    animation: loader-glitch-2 1.9s infinite steps(2, end);
+}
+@keyframes loader-glitch-1 {
+    0%, 100% { transform: translateX(0); clip-path: inset(0 0 60% 0); }
+    25% { transform: translateX(-3px); clip-path: inset(30% 0 20% 0); }
+    50% { transform: translateX(2px); clip-path: inset(10% 0 70% 0); }
+    75% { transform: translateX(-1px); clip-path: inset(50% 0 10% 0); }
+}
+@keyframes loader-glitch-2 {
+    0%, 100% { transform: translateX(0); clip-path: inset(50% 0 10% 0); }
+    25% { transform: translateX(3px); clip-path: inset(10% 0 60% 0); }
+    50% { transform: translateX(-2px); clip-path: inset(40% 0 30% 0); }
+    75% { transform: translateX(1px); clip-path: inset(20% 0 50% 0); }
+}
+/* 完了時はグリッチを止めて晴れさせる */
+.loader.done .loader-glitch::before,
+.loader.done .loader-glitch::after { animation: none; opacity: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+    .loader-inner::before { animation: none; }
+    .loader-glitch::before,
+    .loader-glitch::after { animation: none; opacity: 0; }
+}
+
+/* ---------------------------------------------------------------------------
+   フッター
+   --------------------------------------------------------------------------- */
+.site-footer {
+    position: relative;
+    z-index: 2;              /* 背景レイヤー(z-index:0)より前面に出して画像を隠す */
+    background: var(--bg);   /* 白・不透明でフッター裏の背景画像を覆う */
+    border-top: 1px solid var(--line);
+    padding: 24px 28px;
+    text-align: center;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    color: var(--fg-soft);
+}
+
+/* ---------------------------------------------------------------------------
+   レスポンシブ
+   --------------------------------------------------------------------------- */
+@media (max-width: 900px) {
+    .gallery.layout-masonry { column-count: 2; }
+}
+
+@media (max-width: 640px) {
+    .site-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    .site-nav { justify-content: flex-start; }
+    .nav-dropdown { right: auto; left: 0; }
+    .gallery.layout-grid { grid-template-columns: repeat(2, 1fr) !important; }
+    .gallery.layout-masonry { column-count: 1; }
+    .unit-nav { width: 42px; height: 42px; font-size: 24px; }
+}
+
+/* モーションを減らす設定のユーザーには演出を抑制 */
+@media (prefers-reduced-motion: reduce) {
+    * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+    .cosmic-star { animation: none; opacity: 0.5; }
+}

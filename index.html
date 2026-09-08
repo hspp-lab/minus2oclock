@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- タイトルは script.js が settings.js を読んで動的に差し替える -->
+    <title></title>
+    <!-- 日本語フォント（Noto Sans JP）。環境差をなくし白基調ミニマルに馴染ませる -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;800&display=swap">
+    <link rel="stylesheet" href="./style/style.css">
+</head>
+
+<body>
+    <!-- 画面はすべて script.js が settings.js を基に生成する。ここは器のみ。 -->
+    <div id="app"></div>
+
+    <!-- ES モジュールとして読み込む（settings.js を import する） -->
+    <script type="module" src="./script/script.js"></script>
+</body>
+
+</html>
