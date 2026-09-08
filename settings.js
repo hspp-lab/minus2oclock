@@ -229,7 +229,7 @@ export const siteSettings = {
                     // 以下設定は enabled が1の場合にのみ有効
                     // ===================================
                     // URLパラメータ
-                    urlparam: "domain27",
+                    urlparam: "",
                     // ページ種別
                     // ギャラリーページ:0
                     // 非ギャラリーページ:1
@@ -237,7 +237,7 @@ export const siteSettings = {
                     // 以下設定は pagetype が0の場合にのみ有効
                     // ===================================
                     // 画像親フォルダ名（img配下）
-                    imgparentfoldername: "domain27",
+                    imgparentfoldername: "",
                     // 対象画像ファイル名（先頭と末尾をカンマ区切り、拡張子省略）
                     imgfromto: "001,015",
                     // ギャラリーのスタイル
