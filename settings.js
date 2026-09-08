@@ -123,10 +123,10 @@ export const siteSettings = {
             // 1:表示
             show_welcome: 1,
             // welcome に表示する文言（show_welcome が1のとき有効）
-            welcome_text: "human shashin philosophize plan",
+            welcome_text: "hello, (frozen) world",
             // welcome のホバー時テキストエフェクト（値の意味は site_name_hover と同じ）
             // 0:none / 1:glow / 2:glitch / 3:wave / 4:shuffle / 5:spread
-            welcome_hover: 3
+            welcome_hover: 2
         },
         // メニュー
         menu: {
@@ -151,7 +151,7 @@ export const siteSettings = {
                     // 画像親フォルダ名（img配下）
                     imgparentfoldername: "domain26",
                     // 対象画像ファイル名（先頭と末尾をカンマ区切り、拡張子省略）
-                    imgfromto: "001,052",
+                    imgfromto: "001,051",
                     // ギャラリーのスタイル
                     gstyle: {
                         // 一覧
@@ -330,10 +330,10 @@ export const siteSettings = {
                         // 見出し
                         heading: "About",
                         // プロフィール画像（正方形で表示。img 配下からの相対パス。空文字なら非表示）
-                        profile_image: "img/domain26/001.jpg",
+                        //profile_image: "img/prof/prof.jpg",
+                        profile_image: "",
                         // 本文（段落ごとに配列要素として記述。改行される）
                         paragraphs: [
-                            "HSPP",
                             "人類写真哲学化計画 and you"
                         ],
                         // SNSリンク（モノクロアイコンを表示。クリックで新しいタブで開く）
@@ -376,7 +376,6 @@ export const siteSettings = {
                             "tijb",
                             "GAZIN -雅人-",
                             "竹.n",
-                            "鐘口 武藏",
                             "iphone 1975",
                             "柑絽",
                             "ななみ",
