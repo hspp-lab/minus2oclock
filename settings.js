@@ -10,7 +10,7 @@ export const siteSettings = {
         // サイト名（サイト名エフェクトが有効な場合はこの文字列が起点になる）
         site_name: "-02:00",
         // フッターの「All Rights Reserved」に書く名義
-        allrightsresearved: "hspp"
+        allrightsresearved: "HSPP"
     },
     // index.html（トップ＝サイト全体の見た目に関わる設定）
     index: {
@@ -85,7 +85,7 @@ export const siteSettings = {
             // なお enabled:0 のギャラリーはここに書いても背景対象から除外される。
             bg_img_folder: "domain26,domain27",
             // 切替速度（ミリ秒）※小さいほどサブリミナル的に高速
-            speed:500,
+            speed:2000,
             // 表示順
             // 0:順番（連番どおり）
             // 1:ランダム
@@ -109,7 +109,7 @@ export const siteSettings = {
             show_site_name: 1,
             // 中央に表示する文言（show_site_name が1のとき有効）
             // 空文字にすると site_info.site_name を使う
-            site_name_text: "-2",
+            site_name_text: "-02:00",
             // サイト名のホバー時テキストエフェクト
             // 0:none    … エフェクトなし
             // 1:glow    … 淡く発光＋わずかに拡大
@@ -365,7 +365,22 @@ export const siteSettings = {
                         heading: "Special Thanks",
                         names: [
                             // 以下を「 / 」区切りでテキストのみ表示。ページ見切れる場合は折り返す
-                            "aaa", "bbb", "ccc"
+                            "くま",
+                            "うた",
+                            "gfxkavalan",
+                            "理容猫",
+                            "shirohigeno",
+                            "伊吹",
+                            "totsu",
+                            "あっきー",
+                            "tijb",
+                            "GAZIN -雅人-",
+                            "竹.n",
+                            "鐘口 武藏",
+                            "iphone 1975",
+                            "柑絽",
+                            "ななみ",
+                            "浅学非才"
                         ]
                     }
                 }
