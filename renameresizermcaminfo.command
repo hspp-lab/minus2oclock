@@ -91,8 +91,9 @@ pad_width() {
 
 echo "作業フォルダ: $ROOT"
 echo "1) 子フォルダ直下の JPEG を 001.jpg 形式にリネーム（拡張子は jpg）"
-echo "2) ov / vw を空にして作り直し（長辺 ${OV_MAX} / ${VW_MAX}）"
-echo "3) ov / vw のカメラ情報を削除（原寸のメタデータはそのまま）"
+echo "2) 元画像のカメラ情報を削除してからリネーム"
+echo "3) ov / vw を空にして作り直し（長辺 ${OV_MAX} / ${VW_MAX}）"
+echo "4) ov / vw のカメラ情報も削除"
 echo
 
 total_src=0
@@ -127,6 +128,7 @@ for gallery in "$IMG_ROOT"/*/; do
   i=0
   for src in "${sources[@]}"; do
     i=$((i + 1))
+    strip_camera_info "$src"
     tmp="$gallery/.rename_tmp_$(printf "%0${width}d" "$i").jpg"
     mv -f "$src" "$tmp"
   done
