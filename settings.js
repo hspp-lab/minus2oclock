@@ -30,7 +30,7 @@ export const siteSettings = {
             // 3:parallax … スクロール／マウス移動で奥行きが動くパララックス
             // 4:ripple   … 波紋状に要素が連鎖出現。ホバーで波紋が広がる
             // 5:cosmic   … 背景に星屑パーティクル＋グロー。要素が光の粒から集約して出現
-            animation_type: 2,
+            animation_type: 1,
             // エフェクトの有効範囲（どの画面でサイト演出を効かせるか）
             // ── 単一（1画面）──
             // 0:top のみ
@@ -51,7 +51,7 @@ export const siteSettings = {
             // 13:overview + unit + information
             // ── 全部（4画面）──
             // 14:top + overview + unit + information（全ページ）
-            animation_enable: 6,
+            animation_enable: 11,
             // アニメーション強度（演出の派手さを段階制御）
             // 0:なし（無効にする）
             // 1:普通（控えめ。動き・光量・パーティクル数を抑える）
@@ -85,14 +85,14 @@ export const siteSettings = {
             // なお enabled:0 のギャラリーはここに書いても背景対象から除外される。
             bg_img_folder: "domain26,domain27",
             // 切替速度（ミリ秒）※小さいほどサブリミナル的に高速
-            speed:2000,
+            speed:500,
             // 表示順
             // 0:順番（連番どおり）
             // 1:ランダム
             bg_order: 1,
             // 背景オーバーレイの白の濃度（前面テキストの視認性確保）
             // 0=画像そのまま 〜 1=真っ白寄せ
-            bg_overlay: 0.5,
+            bg_overlay: 0.6,
             // 初回アクセス時のローディングアニメーション（背景画像プリロード中に表示）
             // 1:ring    … 進捗リング＋％（円形プログレス）
             // 2:bar     … 横棒プログレスバー＋％

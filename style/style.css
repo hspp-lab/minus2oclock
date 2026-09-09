@@ -597,9 +597,17 @@ body.unit-open { overflow: hidden; }
 /* fullscreen: 白で全面 */
 .unit-fullscreen { background: var(--bg); }
 
+.unit-frame {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 92vw;
+    max-height: 92vh;
+}
+
 .unit-stage {
     max-width: 92vw;
-    max-height: 86vh;
+    max-height: calc(92vh - 72px);
     box-shadow: var(--shadow-strong);
     border-radius: 0;        /* 画像の四隅は角丸にしない */
     overflow: hidden;
@@ -607,7 +615,7 @@ body.unit-open { overflow: hidden; }
 }
 .unit-fullscreen .unit-stage {
     max-width: 100vw;
-    max-height: 100vh;
+    max-height: calc(100vh - 72px);
     box-shadow: none;
     border-radius: 0;
 }
@@ -615,10 +623,10 @@ body.unit-open { overflow: hidden; }
 .unit-img {
     display: block;
     max-width: 92vw;
-    max-height: 86vh;
+    max-height: calc(92vh - 72px);
     object-fit: contain;   /* 画像は歪ませない（比率保持） */
 }
-.unit-fullscreen .unit-img { max-width: 100vw; max-height: 100vh; }
+.unit-fullscreen .unit-img { max-width: 100vw; max-height: calc(100vh - 72px); }
 
 /* 画像サイズの統一（unit.imgsize_unify）。画像は歪めず片方の辺だけ揃える。
    統一値は CSS 変数で調整可能。画面からはみ出さないよう max で保護する。 */
@@ -660,6 +668,7 @@ body.unit-open { overflow: hidden; }
 }
 .unit-stage[data-aspect="2"] {
     width: min(90vw, 188vh);
+    max-height: calc(92vh - 72px);
     aspect-ratio: 2.35 / 1;
 }
 /* aspect 0（比率指定なし）は枠を作らず画像本来比率で表示 */
@@ -681,9 +690,8 @@ body.unit-open { overflow: hidden; }
 @keyframes u-slide-l { from { transform: translateX(40px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 @keyframes u-slide-r { from { transform: translateX(-40px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
-/* 操作系ボタン */
+/* 閉じるは画面右上。前後は画像の下 */
 .unit-close, .unit-nav {
-    position: absolute;
     border: 1px solid var(--line);
     background: rgba(255, 255, 255, 0.9);
     color: var(--fg);
@@ -692,23 +700,27 @@ body.unit-open { overflow: hidden; }
     transition: transform 0.2s ease, background 0.2s ease;
 }
 .unit-close {
+    position: absolute;
     top: 22px; right: 22px;
     width: 44px; height: 44px;
     font-size: 24px; line-height: 1;
 }
+.unit-navs {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 28px;
+    margin-top: 16px;
+    flex-shrink: 0;
+}
 .unit-nav {
-    top: 50%;
-    transform: translateY(-50%);
     width: 52px; height: 52px;
     font-size: 30px; line-height: 1;
 }
-.unit-prev { left: 18px; }
-.unit-next { right: 18px; }
 .unit-close:hover, .unit-nav:hover {
     background: #fff;
     transform: scale(1.08);
 }
-.unit-nav:hover { transform: translateY(-50%) scale(1.08); }
 
 /* ---------------------------------------------------------------------------
    出現アニメーション（anim-item + in-view）
@@ -1274,7 +1286,8 @@ body[data-bg="slide"] .bg-slot.show {
     .nav-dropdown { right: auto; left: 0; }
     .gallery.layout-grid { grid-template-columns: repeat(2, 1fr) !important; }
     .gallery.layout-masonry { column-count: 1; }
-    .unit-nav { width: 42px; height: 42px; font-size: 24px; }
+    .unit-nav { width: 48px; height: 48px; font-size: 26px; }
+    .unit-navs { gap: 40px; margin-top: 14px; }
 }
 
 /* モーションを減らす設定のユーザーには演出を抑制 */

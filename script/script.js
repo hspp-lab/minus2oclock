@@ -74,6 +74,31 @@ function buildImageList(imgfromto, parentFolder) {
     return files;
 }
 
+// 比率はそのまま、配信用の縮小版へ差し替える。
+// ov = 一覧、vw = 単体・背景。ファイルが無いときは original に戻す。
+function toWebPath(src, sub) {
+    const i = src.lastIndexOf("/");
+    if (i < 0) return src;
+    return `${src.slice(0, i)}/${sub}${src.slice(i)}`;
+}
+
+function bindImgSrc(img, webSrc, originalSrc) {
+    img.src = webSrc;
+    if (webSrc === originalSrc) return;
+    const onErr = () => {
+        img.removeEventListener("error", onErr);
+        img.src = originalSrc;
+    };
+    img.addEventListener("error", onErr);
+}
+
+function preloadUrl(url) {
+    if (!url) return;
+    const img = new Image();
+    img.decoding = "async";
+    img.src = url;
+}
+
 // enabled なページ定義を URLパラメータ → 定義 の Map にまとめる
 function collectPages(settings) {
     const pages = {};              // urlparam -> { key, category, def }
@@ -476,10 +501,10 @@ function buildGalleryOverview(def) {
         cell.style.setProperty("--i", String(idx));
 
         const img = document.createElement("img");
-        img.loading = "lazy";
+        img.loading = idx < 4 ? "eager" : "lazy";
         img.decoding = "async";
-        img.src = src;
         img.alt = "";
+        bindImgSrc(img, toWebPath(src, "ov"), src);
         img.style.objectFit = OBJECT_FIT_VALUES[ov.object_fit];
         // 画像の色（0:そのまま 1:モノクロ）
         if (ov.imgcolor === 1) img.classList.add("img-mono");
@@ -516,7 +541,8 @@ function openUnit(files, index, def) {
 
     const img = document.createElement("img");
     img.className = "unit-img";
-    img.src = files[index];
+    img.decoding = "async";
+    bindImgSrc(img, toWebPath(files[index], "vw"), files[index]);
     img.alt = "";
     // 画像の色（0:そのまま 1:モノクロ）
     if (g.unit.imgcolor === 1) img.classList.add("img-mono");
@@ -552,15 +578,39 @@ function openUnit(files, index, def) {
     prev.addEventListener("click", () => stepUnit(-1));
     next.addEventListener("click", () => stepUnit(1));
 
-    overlay.appendChild(stage);
+    const navs = document.createElement("div");
+    navs.className = "unit-navs";
+    navs.appendChild(prev);
+    navs.appendChild(next);
+
+    const frame = document.createElement("div");
+    frame.className = "unit-frame";
+    frame.appendChild(stage);
+    frame.appendChild(navs);
+
+    overlay.appendChild(frame);
     overlay.appendChild(closeBtn);
-    overlay.appendChild(prev);
-    overlay.appendChild(next);
 
     // 背景クリックで閉じる（modal時）
     overlay.addEventListener("click", (e) => {
         if (e.target === overlay) closeUnit();
     });
+
+    let touchStartX = 0;
+    let touchStartY = 0;
+    overlay.addEventListener("touchstart", (e) => {
+        const t = e.changedTouches[0];
+        touchStartX = t.clientX;
+        touchStartY = t.clientY;
+    }, { passive: true });
+    overlay.addEventListener("touchend", (e) => {
+        if (e.target.closest("button")) return;
+        const t = e.changedTouches[0];
+        const dx = t.clientX - touchStartX;
+        const dy = t.clientY - touchStartY;
+        if (Math.abs(dx) < 48 || Math.abs(dx) < Math.abs(dy)) return;
+        stepUnit(dx < 0 ? 1 : -1);
+    }, { passive: true });
 
     document.body.appendChild(overlay);
     document.body.classList.add("unit-open");
@@ -569,9 +619,17 @@ function openUnit(files, index, def) {
 
     // 表示アニメーション起動
     requestAnimationFrame(() => overlay.classList.add("show"));
+    preloadUnitNeighbors(files, index);
 
     // キーボード操作
     document.addEventListener("keydown", onUnitKey);
+}
+
+function preloadUnitNeighbors(files, index) {
+    const len = files.length;
+    if (len < 2) return;
+    preloadUrl(toWebPath(files[(index + 1) % len], "vw"));
+    preloadUrl(toWebPath(files[(index - 1 + len) % len], "vw"));
 }
 
 function stepUnit(delta) {
@@ -584,7 +642,8 @@ function stepUnit(delta) {
     const img = unitState.img;
     img.classList.remove("enter-fade", "enter-slide-left", "enter-slide-right");
     void img.offsetWidth;
-    img.src = unitState.files[unitState.index];
+    img.src = toWebPath(unitState.files[unitState.index], "vw");
+    preloadUnitNeighbors(unitState.files, unitState.index);
     if (trans.mode === 0) {
         img.classList.add("enter-fade");
     } else {
@@ -951,34 +1010,17 @@ function buildBgFiles(effect, settings) {
         const imgfromto = rangeMap[folder];
         // 対応する gallery 定義が無いフォルダはスキップ（存在しない画像を読まない）
         if (!imgfromto) continue;
-        files = files.concat(buildImageList(imgfromto, folder));
+        files = files.concat(buildImageList(imgfromto, folder).map(src => toWebPath(src, "vw")));
     }
     // 表示順
     return effect.bg_order === 1 ? applyDisplayOrder(files, 2) : files;
 }
 
-// サイト全体でプリロードすべき全画像を集める（重複除去）。
-// - 背景スライドショーの画像（body_bg_effect が有効な場合）
-// - 全ギャラリーページ（pagetype:0）の画像
-// これを初回ローディングで一括読み込みし、以降の overview/unit ではローディング不要にする。
-function collectAllImages(settings) {
+// 起動時に温めるのは背景の「今」と「次」だけ。ギャラリー原寸は読まない。
+function collectWarmImages(settings) {
     const effect = settings.index.effect;
-    const set = new Set();
-
-    // 背景画像
-    if ((effect.body_bg_effect || 0) !== 0) {
-        buildBgFiles(effect, settings).forEach(src => set.add(src));
-    }
-
-    // 全ギャラリーページの画像
-    const pages = collectPages(settings);
-    for (const key of Object.keys(pages)) {
-        const { def } = pages[key];
-        if (def.pagetype === 0) {
-            buildImageList(def.imgfromto, def.imgparentfoldername).forEach(src => set.add(src));
-        }
-    }
-    return Array.from(set);
+    if ((effect.body_bg_effect || 0) === 0) return [];
+    return buildBgFiles(effect, settings).slice(0, 2);
 }
 
 // プリロード済み画像を保持（GC で破棄されないよう参照を残す）
@@ -1087,9 +1129,8 @@ function teardownBackground() {
     document.body.style.removeProperty("--bg-overlay");
 }
 
-// 背景スライドショーを起動（トップ表示時に呼ぶ）
-// 全画像ぶんのスロットを最初に生成し background-image を一度だけ設定して保持する。
-// 切替は opacity のみで行うため再デコードが起きず、白抜けが出ない。
+// 背景スライドショーを起動（トップ表示時に呼ぶ）。
+// スロットは今と次の2枚。切替演出（cut/fade/zoom 等）は settings のまま。
 function setupBackground(effect) {
     teardownBackground();
 
@@ -1097,44 +1138,42 @@ function setupBackground(effect) {
     if (type === 0) return;
     if (bgFiles.length === 0) return;
 
-    // reduced-motion のときは高速明滅を避け、ゆっくりフェードへ落とす
     const reduce = window.matchMedia &&
         window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     document.body.dataset.bg = BG_NAMES[type] || "none";
     document.body.style.setProperty("--bg-overlay", String(effect.bg_overlay ?? 0.35));
 
-    // 背景レイヤー
     bgLayer = document.createElement("div");
     bgLayer.className = "bg-layer";
 
-    // 全画像ぶんのスロットを生成し、背景画像を一度だけ設定して保持
-    const slots = bgFiles.map((src, i) => {
-        const slot = document.createElement("div");
-        slot.className = "bg-slot" + (i === 0 ? " show" : "");
-        slot.style.backgroundImage = `url("${src}")`;
-        bgLayer.appendChild(slot);
-        return slot;
-    });
+    const slotA = document.createElement("div");
+    const slotB = document.createElement("div");
+    slotA.className = "bg-slot show";
+    slotB.className = "bg-slot";
+    slotA.style.backgroundImage = `url("${bgFiles[0]}")`;
+    slotB.style.backgroundImage = `url("${bgFiles[bgFiles.length > 1 ? 1 : 0]}")`;
+    bgLayer.appendChild(slotA);
+    bgLayer.appendChild(slotB);
 
-    // 白フラッシュ用（flash 演出）
     const flash = document.createElement("div");
     flash.className = "bg-flash";
     bgLayer.appendChild(flash);
 
-    // 白オーバーレイ（視認性確保）
     const overlay = document.createElement("div");
     overlay.className = "bg-overlay";
     bgLayer.appendChild(overlay);
 
     document.body.prepend(bgLayer);
 
+    const slots = [slotA, slotB];
+    let visible = 0;
     bgIndex = 0;
 
-    // 次画像へ切り替える（opacity のみ操作。背景画像は保持済み）
     function advance() {
-        const prev = bgIndex;
-        bgIndex = (bgIndex + 1) % slots.length;
+        if (bgFiles.length < 2) return;
+        const hidden = 1 - visible;
+        bgIndex = (bgIndex + 1) % bgFiles.length;
 
         if (type === 5 && !reduce) {
             flash.classList.remove("fire");
@@ -1142,17 +1181,17 @@ function setupBackground(effect) {
             flash.classList.add("fire");
         }
 
-        slots[bgIndex].classList.add("show");
-        slots[prev].classList.remove("show");
+        slots[hidden].classList.add("show");
+        slots[visible].classList.remove("show");
+        visible = hidden;
+
+        const upcoming = (bgIndex + 1) % bgFiles.length;
+        slots[1 - visible].style.backgroundImage = `url("${bgFiles[upcoming]}")`;
     }
 
-    // 速度。reduce 時は最低でも 900ms 以上に緩める
     let interval = Math.max(30, effect.speed || 100);
     if (reduce) interval = Math.max(interval, 900);
 
-    // requestAnimationFrame ベースのタイマーで切り替える。
-    // setInterval だとカーソルの rAF と別タイミングで発火しフレームを奪い合うが、
-    // rAF に揃えることで描画フレーム上で協調し、カーソルのカクつきを抑える。
     let lastTime = performance.now();
     function tick(now) {
         if (now - lastTime >= interval) {
@@ -1264,51 +1303,8 @@ function navigateTo(e, url) {
     if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
     e.preventDefault();
     history.pushState(null, "", url);
-
-    // 遷移先が多数の画像を描画するギャラリー(overview)の場合、描画で一瞬固まるため
-    // 軽量なローディングを挟んで描画中の固まりを隠す。それ以外は即描画。
-    const param = getCurrentParam();
-    const pages = collectPages(siteSettings);
-    const isGallery = param && pages[param] && pages[param].def.pagetype === 0;
-
-    if (isGallery) {
-        renderWithTransitionLoader();
-    } else {
-        render();
-        window.scrollTo(0, 0);
-    }
-}
-
-// 遷移ローダーを出してから render する。
-// 画像はプリロード済みなので読み込み待ちは不要。重い DOM 生成＆描画の間だけローダーで覆う。
-function renderWithTransitionLoader() {
-    const effect = siteSettings.index.effect;
-    const loader = showLoader(effect.loading_effect || 1, 1);
-    updateLoader(loader, 0);
-
-    // 画像はプリロード済みなので実測の進捗はない。0→100% を短時間で滑らかに見せる。
-    // 重い render は最初のフレームで済ませ、その裏で進捗バーだけ最後まで動かす。
-    const DURATION = 260; // 遷移演出の長さ(ms)
-    let rendered = false;
-    const start = performance.now();
-
-    function step(now) {
-        // 最初のフレームで重い描画を実行（ローダーが1枚描かれた後）
-        if (!rendered) {
-            render();
-            window.scrollTo(0, 0);
-            rendered = true;
-        }
-        const pct = Math.min(100, ((now - start) / DURATION) * 100);
-        updateLoader(loader, pct);
-        if (pct >= 100) {
-            hideLoader(loader);
-            return;
-        }
-        requestAnimationFrame(step);
-    }
-    // ローダーが確実に1フレーム描画された次から進める
-    requestAnimationFrame(step);
+    render();
+    window.scrollTo(0, 0);
 }
 
 // popstate（戻る/進む）にも対応
@@ -1366,9 +1362,8 @@ function boot() {
     const bgOn = (effect.body_bg_effect || 0) !== 0;
     bgFiles = bgOn ? buildBgFiles(effect, siteSettings) : [];
 
-    // 初回に読み込むサイト全体の画像（背景＋全ギャラリー）。
-    // これを1回で読み切り、以降の overview/unit ではローディングを出さない。
-    const allImages = collectAllImages(siteSettings);
+    // 初回に読むのは背景の今と次だけ。ギャラリーは一覧の lazy / 単体表示時に読む。
+    const allImages = collectWarmImages(siteSettings);
 
     // 読み込む画像が無ければローディング不要
     if (allImages.length === 0) {
@@ -1381,7 +1376,7 @@ function boot() {
     // 表示%は「演出の進捗（時間ベース）」と「実読み込みの進捗」の小さい方を採用する。
     // これにより、読み込みが早く終わっても演出は最低 MIN_LOADING_MS かけて 0→100% を見せ、
     // 読み込みが遅ければ演出が 100% 手前で待機して嘘の 100% を出さない。
-    const MIN_LOADING_MS = 1600; // ローディング演出の最低表示時間
+    const MIN_LOADING_MS = 400; // 背景2枚待ち。全枚プリロードはしない
     const loader = showLoader(effect.loading_effect || 1, allImages.length);
     updateLoader(loader, 0);
 
