@@ -1,3 +1,5 @@
+@import url("./worlds.css");
+
 /* =============================================================================
    style.css : 白基調のミニマルデザイン + 全エフェクト/レイアウトパターン
    -----------------------------------------------------------------------------
@@ -473,6 +475,58 @@ img,
     transform: translateY(-2px);
 }
 
+/* Password entry retains the site navigation and gate styling. */
+.special-gallery-gate {
+    width: min(100%, 620px);
+    min-height: 58vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    margin: 0 auto;
+    padding: 20px 0;
+    color: var(--fg);
+    background: transparent;
+    background-image: none;
+}
+.special-gallery-description {
+    max-width: 38ch;
+    margin: 0 0 24px;
+}
+.special-gallery-form {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+    max-width: 460px;
+}
+.special-gallery-form input {
+    min-width: 0;
+    padding: 13px 14px;
+    color: var(--fg);
+    border: 1px solid var(--line);
+   
+    background: rgba(250, 248, 242, 0.72);
+    font: inherit;
+}
+.special-gallery-form button {
+    padding: 13px 18px;
+    color: #fff;
+    border: 0;
+   
+    background: var(--accent);
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+}
+.special-gallery-form button:hover { background: var(--fg); }
+.special-gallery-error {
+    grid-column: 1 / -1;
+    min-height: 1.5em;
+    margin: 2px 0 0;
+    color: var(--accent);
+    font-size: 12px;
+}
+
 /* ---------------------------------------------------------------------------
    ギャラリー：一覧レイアウト
    --------------------------------------------------------------------------- */
@@ -854,7 +908,7 @@ body[data-anim="cosmic"] #app { position: relative; z-index: 1; }
 
 /* ---------------------------------------------------------------------------
    マウスカーソルエフェクト（cursor_effect）
-   body[data-cursor] で種別を切り替える。標準カーソルは種別ありのとき隠す。
+   body[data-cursor] で演出を切り替える。標準カーソルは常に残す。
    --------------------------------------------------------------------------- */
 /* 追従要素の層（最前面・クリックを透過） */
 .cursor-layer {
@@ -865,20 +919,7 @@ body[data-anim="cosmic"] #app { position: relative; z-index: 1; }
     overflow: visible;
 }
 
-/* ring/glow/magnetic 以外でも標準カーソルは残す。演出ありのときだけ隠す */
-body[data-cursor="ring"],
-body[data-cursor="trail"],
-body[data-cursor="glow"],
-body[data-cursor="magnetic"],
-body[data-cursor="particles"] {
-    cursor: none;
-}
-/* リンク等の上でも標準カーソルを隠す（演出で表現するため） */
-body[data-cursor="ring"] a, body[data-cursor="ring"] button,
-body[data-cursor="magnetic"] a, body[data-cursor="magnetic"] button,
-body[data-cursor="glow"] a, body[data-cursor="glow"] button {
-    cursor: none;
-}
+/* 標準カーソルは常に表示し、演出は追加レイヤーとして重ねる。 */
 
 /* メイン要素の共通位置（transform は JS が指定） */
 .cursor-main {

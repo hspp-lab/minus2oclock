@@ -1,0 +1,375 @@
+/* Twenty worlds, one arcade. All selectors are scoped to the secret gallery.
+   Photographs remain rectangles; cover/contain always preserves image ratio. */
+body.world-active .site-main { max-width: none; padding: 0; }
+body.world-active .cursor-layer { display: none; }
+.wx { --paper: #edeadf; --ink: #253d8c; --accent: #253d8c; --muted: #85858a; --font: Georgia, 'Times New Roman', serif; background: var(--paper); color: var(--ink); min-height: calc(100svh - 100px); padding: clamp(18px, 4vw, 64px); font-family: var(--font); overflow: clip; }
+.wx *, .wx *::before, .wx *::after { box-sizing: border-box; }
+.wx [hidden] { display: none !important; }
+.wx-mast { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 24px; border-top: 1px solid currentColor; padding-top: 16px; margin-bottom: 30px; }
+.wx-identity h1 { font: inherit; font-size: clamp(30px, 5vw, 72px); letter-spacing: -.07em; line-height: 1; margin: 12px 0 0; overflow-wrap: anywhere; }
+.wx-kicker, .wx-micro { font: 10px/1.6 'Courier New', monospace; letter-spacing: .15em; }
+.wx-select { max-width: 100%; padding: 10px 30px 10px 12px; color: inherit; background: var(--paper); border: 1px solid currentColor; border-radius: 0; font: 11px/1.4 'Courier New', monospace; }
+.wx-hint { white-space: pre-line; max-width: 65ch; margin: 0 0 24px; font: 12px/1.9 Arial, 'Noto Sans JP', sans-serif; opacity: .8; }
+.wx-stage { max-width: 1500px; margin: auto; }
+.wx-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+.wx-button { appearance: none; padding: 11px 16px; background: transparent; border: 1px solid currentColor; border-radius: 0; color: inherit; font: 11px/1.4 'Courier New', monospace; cursor: pointer; touch-action: manipulation; }
+.wx-button:hover { background: color-mix(in srgb, var(--ink) 10%, transparent); }
+.wx-button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.wx-button:disabled { cursor: default; opacity: .5; }
+.wx :focus-visible { outline: 3px solid var(--accent); outline-offset: 4px; }
+.wx-slider { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; font: 10px 'Courier New', monospace; }
+.wx-slider input { width: 125px; max-width: 100%; accent-color: var(--accent); }
+.wx-photo { display: block; width: 100%; height: auto; border-radius: 0; object-fit: contain; }
+.wx-status { min-height: 1.7em; margin: 24px 0 0; font: 11px/1.7 'Courier New', monospace; }
+.wx-title h2 { font: inherit; font-size: clamp(42px, 8vw, 140px); line-height: .85; }
+/* 01 / Ink on paper. The dot screen sits above the image, never changes its shape. */
+.wx[data-pattern="1"] { background-image: repeating-linear-gradient(0deg, transparent 0 3px, #253d8c05 3px 4px); }
+.wx-print { --ink: #234bbb; --dots: .22; position: relative; color: var(--ink); background: #f6f3e9; max-width: 720px; padding: clamp(20px, 4vw, 64px); margin: 30px auto; box-shadow: 0 8px 35px #1b243c19; }
+.wx-print h2 { font: 400 clamp(48px, 8vw, 110px)/.83 Georgia, serif; letter-spacing: -.075em; margin: 25px 0 -20px; position: relative; z-index: 2; overflow-wrap: anywhere; }
+.wx-print-image { position: relative; background: var(--ink); margin-inline: 12%; }
+.wx-print-image img { filter: grayscale(1) contrast(1.3); mix-blend-mode: screen; }
+.wx-print-image::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(var(--ink) .6px, transparent 1px); background-size: 3px 3px; opacity: var(--dots); }
+.wx-print.original img { filter: none; mix-blend-mode: normal; }
+.wx-print.original .wx-print-image::after { display: none; }
+.wx-print-bottom { font-size: clamp(30px, 5vw, 66px); line-height: .9; letter-spacing: -.07em; overflow-wrap: anywhere; margin: -12px 0 10px 24%; position: relative; }
+/* 02 / A split record player with a track list. */
+.wx[data-pattern="2"] { --paper:#141516; --ink:#e8e1d3; --accent:#e5a863; --font:'Helvetica Neue',Arial,sans-serif; }
+.wx[data-pattern="2"] .wx-stage { display:grid; grid-template-columns: minmax(0,1.4fr) minmax(240px,.8fr); gap:24px 60px; max-width:1100px; }
+.wx[data-pattern="2"] .wx-hint { grid-column:1/-1; }
+.wx-player { min-width:0; }
+.wx-cover { background:#252526; padding:18px; }
+.wx-cover img { height: min(48vh,440px); object-fit:contain; }
+.wx-player h2 { font-size:42px; font-weight:300; letter-spacing:-.05em; margin:20px 0; }
+.wx-player progress { width:100%; height:3px; accent-color:var(--accent); margin-bottom:24px; }
+.wx-playlist { max-height:660px; overflow:auto; scrollbar-width:thin; }
+.wx-playlist button { display:block; width:100%; text-align:left; border:0; border-bottom:1px solid #ffffff20; padding:18px; }
+/* 03 / The orbit is true CSS perspective, with flat rectangular photo planes. */
+.wx[data-pattern="3"] { --paper:#11172b; --ink:#cbd8f3; --accent:#a1cfff; --font:'Helvetica Neue',Arial,sans-serif; background-image:radial-gradient(ellipse at 50% 60%,#354365,transparent 65%); }
+.wx-orbit-view { height:620px; position:relative; perspective:1000px; overflow:hidden; touch-action:pan-y; cursor:grab; }
+.wx-orbit { --depth:280px; --turn:0deg; position:absolute; left:50%; top:50%; transform-style:preserve-3d; transform:rotateY(var(--turn)); transition:transform .15s ease-out; }
+.wx-orbit-card { position:absolute; width:230px; margin:0; transform:translate(-50%,-50%) rotateY(var(--angle)) translateZ(var(--depth)); background:#17213c; border:1px solid #9db7e855; padding:12px; backface-visibility:hidden; box-shadow:0 25px 60px #0007; }
+.wx-orbit-card img { height:260px; object-fit:cover; }
+.wx-orbit-card figcaption { margin-top:10px; font:11px monospace; }
+/* 04 / Vaporwave desktop: hard edged windows, candy sky, a task shelf. */
+.wx[data-pattern="4"] { --paper:#d8c6e7; --ink:#50315d; --accent:#844989; --font:'Courier New',monospace; background-image:linear-gradient(140deg,#e5c0e7,#b4e0df); }
+.wx-desktop { height:600px; position:relative; overflow:hidden; background:linear-gradient(#ffffff30 1px,transparent 1px),linear-gradient(90deg,#ffffff30 1px,transparent 1px); background-size:32px 32px; border:1px solid #ffffff88; }
+.wx-icons { display:flex; flex-direction:column; align-items:flex-start; gap:18px; padding:22px; }
+.wx-window { position:absolute; width:min(360px,90%); background:#f4eaf6; border:1px solid #694b74; box-shadow:6px 7px 0 #58387033; }
+.wx-window-head { display:flex; justify-content:space-between; background:linear-gradient(90deg,#977dbb,#aad5df); color:#211733; touch-action:none; }
+.wx-window-head button { border:0; }
+.wx-drag-handle { flex:1; text-align:left; cursor:move; }
+.wx-window img { height:300px; padding:12px; object-fit:contain; }
+.wx-taskbar { display:flex; flex-wrap:wrap; gap:6px; padding:12px 0; }
+/* 05 / Cyberpunk console. */
+.wx[data-pattern="5"] { --paper:#080f14; --ink:#8cf4d4; --accent:#ff769f; --font:'Courier New',monospace; background-image:repeating-linear-gradient(0deg,transparent 0 3px,#8cf4d406 3px 4px); }
+.wx[data-pattern="5"] .wx-mast { border-color:var(--accent); }
+.wx[data-pattern="5"] .wx-identity h1 { text-shadow:2px 2px #ff769f66; }
+.wx-terminal-screen { padding:18px; border:1px solid #8cf4d455; box-shadow:5px 5px #ff769f33; margin-bottom:24px; }
+.wx-terminal-screen img { height:420px; object-fit:contain; }
+.wx-log { max-height:150px; min-height:60px; overflow:auto; white-space:pre-wrap; overflow-wrap:anywhere; font-size:11px; }
+.wx-command { display:flex; align-items:center; gap:12px; border-top:1px solid currentColor; padding-top:14px; }
+.wx-command input { flex:1; min-width:0; background:transparent; color:inherit; border:0; font:16px monospace; padding:12px; user-select:text; }
+/* 06 / Compact orange-pencil curation. */
+.wx[data-pattern="6"] { --paper:#e0ded5; --ink:#37372f; --accent:#a44529; --font:'Courier New',monospace; }
+.wx-contact { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:16px; }
+.wx-contact-card > button { display:block; width:100%; padding:8px; border:1px solid #8b8d8266; }
+.wx-contact-card img { height:160px; object-fit:contain; }
+.wx-contact-card span { display:block; padding-top:12px; font-size:10px; }
+.wx-contact-card > button[aria-pressed="true"] { background:#a44529; color:#fff9e9; }
+.wx-contact-card .wx-controls { margin-top:8px; }
+/* 07 / Couture runway. */
+.wx[data-pattern="7"] { --paper:#faf9f6; --ink:#211e1a; --accent:#82745e; --font:Didot,'Bodoni 72',Georgia,serif; }
+.wx[data-pattern="7"] .wx-identity h1 { letter-spacing:.13em; font-size:clamp(24px,4vw,48px); }
+.wx[data-pattern="7"] .wx-controls { justify-content:center; }
+.wx-runway { position:relative; max-width:900px; margin:auto; padding:0 30px 30px; }
+.wx-look img { height:72vh; object-fit:contain; }
+.wx-look-code { position:absolute; bottom:-10px; left:0; font-size:clamp(42px,9vw,130px); font-weight:400; letter-spacing:-.055em; line-height:1; margin:0; mix-blend-mode:difference; color:#fff; pointer-events:none; }
+.wx-look-index { display:grid; grid-template-columns:repeat(auto-fill,minmax(60px,1fr)); gap:8px; margin:20px 0; }
+/* 08 / An atlas with geographic gutters. */
+.wx[data-pattern="8"] { --paper:#e5e9de; --ink:#344c43; --accent:#ac503d; --font:'Courier New',monospace; }
+.wx-atlas-view { height:650px; overflow:auto; border:1px solid #344c4355; scrollbar-width:thin; position:relative; }
+.wx-atlas { --tile:240px; display:grid; grid-template-columns:repeat(8,var(--tile)); gap:40px; padding:50px; width:max-content; background-image:linear-gradient(#344c4310 1px,transparent 1px),linear-gradient(90deg,#344c4310 1px,transparent 1px); background-size:20px 20px; }
+.wx-map-tile { margin:0; }
+.wx-map-tile img { height:180px; object-fit:cover; }
+.wx-map-tile figcaption { border-bottom:1px solid currentColor; margin-bottom:12px; font-size:11px; }
+/* 09 / Memory cards. */
+.wx[data-pattern="9"] { --paper:#212034; --ink:#e6d7fa; --accent:#d8b5ff; --font:Georgia,serif; }
+.wx-memory { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; max-width:900px; margin:auto; }
+.wx-memory > button { min-width:0; aspect-ratio:4/3; padding:0; overflow:hidden; background:repeating-linear-gradient(45deg,#b49acc14 0 1px,transparent 1px 10px); font:32px Georgia,serif; }
+.wx-memory img { height:100%; object-fit:cover; }
+.wx-memory .matched { opacity:.6; border-color:#accda2; }
+/* 10 / Every tile crops a square photo plane, rather than stretching it. */
+.wx[data-pattern="10"] { --paper:#ece4d1; --ink:#725238; --accent:#b66d34; --font:'Courier New',monospace; }
+.wx-puzzle { width:min(100%,570px); aspect-ratio:1; display:grid; grid-template-columns:repeat(3,1fr); gap:4px; padding:8px; background:#b5a384; margin:auto; }
+.wx-puzzle > button { position:relative; overflow:hidden; padding:0; border:0; background:#d7c7ac; }
+.wx-puzzle img { position:absolute; width:300%; height:300%; max-width:none; object-fit:cover; }
+.wx-puzzle span { position:absolute; top:5px; left:5px; background:#0008; color:#fff; padding:3px 5px; }
+.wx-puzzle-preview { max-width:220px; margin:0 auto 20px; }
+/* 11 / Darkroom trays and safelight. */
+.wx[data-pattern="11"] { --paper:#1b090b; --ink:#f1a699; --accent:#ed5b50; --font:'Courier New',monospace; background-image:radial-gradient(ellipse at 50% 0,#75292377,transparent 70%); }
+.wx-darkroom { --exposure:1; --contrast:1; --develop:1; padding:30px; border:8px solid #32151a; background:#090709; box-shadow:inset 0 0 30px #000; max-width:1000px; margin:auto; }
+.wx-darkroom img { height:60vh; object-fit:contain; opacity:var(--develop); filter:grayscale(1) brightness(var(--exposure)) contrast(var(--contrast)); }
+.wx-darkroom.color img { filter:brightness(var(--exposure)) contrast(var(--contrast)); }
+/* 12 / Precisely registered two-layer wipe. */
+.wx[data-pattern="12"] { --paper:#e1eafa; --ink:#244878; --accent:#456fb1; --font:Georgia,serif; }
+.wx-compare { --split:50%; position:relative; height:65vh; background:#b8c7de; touch-action:pan-y; }
+.wx-compare-base,.wx-compare-top { position:absolute; inset:0; }
+.wx-compare img { height:100%; object-fit:contain; }
+.wx-compare-top { clip-path:inset(0 calc(100% - var(--split)) 0 0); background:#244878; }
+.wx-compare-top img { filter:grayscale(1); mix-blend-mode:screen; }
+.wx-compare::after { content:''; position:absolute; top:0; bottom:0; left:var(--split); width:2px; background:white; pointer-events:none; }
+/* 13 / Monumental timestamps and a continuous film rail. */
+.wx[data-pattern="13"] { --paper:#171717; --ink:#e7dcc6; --accent:#cca663; --font:'Courier New',monospace; }
+.wx-timeline { display:flex; gap:60px; overflow-x:auto; scroll-snap-type:x mandatory; padding:0 0 30px; }
+.wx-time-frame { flex:0 0 min(70vw,720px); margin:0; scroll-snap-align:center; }
+.wx-time-frame img { height:420px; object-fit:cover; }
+.wx-time { display:block; font-size:clamp(40px,8vw,120px); letter-spacing:-.08em; line-height:1.1; }
+.wx-time-frame figcaption { margin-top:14px; font-size:11px; }
+.wx-time-markers { display:flex; overflow:auto; padding-top:20px; }
+.wx-time-markers button { border:0; border-left:1px solid currentColor; }
+/* 14 / Paper spreads, editorial type and binding shadow. */
+.wx[data-pattern="14"] { --paper:#c7c1b7; --ink:#282724; --accent:#ac3c2e; --font:Georgia,serif; }
+.wx-book { display:grid; grid-template-columns:1fr 1fr; max-width:1050px; margin:auto; box-shadow:0 20px 50px #27221c25; }
+.wx-sheet { min-width:0; background:#f6f1e5; padding:clamp(20px,3vw,48px); }
+.wx-sheet:first-child { background:linear-gradient(90deg,#f6f1e5 95%,#d5cdbd); }
+.wx-sheet h2 { font-size:clamp(24px,4vw,68px); font-weight:400; margin:0 0 24px; letter-spacing:-.06em; overflow-wrap:anywhere; }
+.wx-sheet:nth-child(even) { padding-top:100px; }
+.wx-sheet img { height:360px; object-fit:contain; }
+.wx-sheet p { font:10px/1.8 monospace; overflow-wrap:anywhere; }
+.wx-book.turn { animation:wx-page .35s ease-out; }
+@keyframes wx-page { from { opacity:.4; transform:translateX(12px); } to { opacity:1; transform:none; } }
+/* 15 / A real linked star chart; observed photographs stay flat. */
+.wx[data-pattern="15"] { --paper:#101b2a; --ink:#c3d2ea; --accent:#f2db93; --font:Georgia,serif; }
+.wx-observatory { display:grid; grid-template-columns:1fr 1fr; gap:60px; align-items:center; }
+.wx-sky { --sky-angle:0deg; position:relative; aspect-ratio:1; transform:rotate(var(--sky-angle)); touch-action:pan-y; }
+.wx-sky svg { position:absolute; inset:0; width:100%; height:100%; stroke:#c3d2ea25; stroke-width:.2; }
+.wx-sky button { position:absolute; padding:3px; min-width:24px; font-size:9px; transform:translate(-50%,-50%) rotate(calc(-1 * var(--sky-angle))); border-color:#c3d2ea55; background:#101b2a; }
+.wx-star-detail { min-width:0; border-left:1px solid #c3d2ea33; padding-left:24px; }
+.wx-star-detail img { max-height:480px; }
+.wx-star-detail h2 { font-size:40px; font-weight:400; letter-spacing:-.05em; }
+/* 16 / Large, lockable triptych reels. */
+.wx[data-pattern="16"] { --paper:#f0dacf; --ink:#79413c; --accent:#9e4550; --font:Didot,Georgia,serif; }
+.wx-reels { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:24px; }
+.wx-reel { min-width:0; text-align:center; padding:14px; border:1px solid #79413c44; background:#fff7ee88; }
+.wx-reel img { height:380px; object-fit:cover; }
+.wx-reel h2 { font-size:clamp(24px,4vw,64px); font-weight:400; margin:20px 0; overflow-wrap:anywhere; }
+/* 17 / A Swiss layout workspace. */
+.wx[data-pattern="17"] { --paper:#efece3; --ink:#bc3025; --accent:#242420; --font:Arial,sans-serif; }
+.wx[data-pattern="17"] .wx-identity h1 { font-weight:900; }
+.wx-typesheet { --tx:6%; --ty:8%; --type-size:80px; max-width:900px; margin:auto; position:relative; border:1px solid #bc302555; padding:30px; background:linear-gradient(90deg,#bc30250d 1px,transparent 1px); background-size:8.333% 100%; overflow:hidden; }
+.wx-typesheet > img { height:65vh; object-fit:contain; }
+.wx-type-word { position:absolute; top:var(--ty); left:var(--tx); width:35%; font-size:var(--type-size); font-weight:900; line-height:.8; letter-spacing:-.08em; overflow-wrap:anywhere; margin:0; cursor:move; touch-action:none; text-shadow:1px 1px #efece3; }
+.wx-typesheet.serif .wx-type-word { font-family:Didot,Georgia,serif; font-weight:400; }
+/* 18 / A room, rather than a card grid. */
+.wx[data-pattern="18"] { --paper:#dedbd3; --ink:#393833; --accent:#927b55; --font:'Helvetica Neue',Arial,sans-serif; }
+.wx-room { height:600px; perspective:1000px; display:flex; align-items:center; justify-content:center; gap:30px; background:linear-gradient(#ece9e2 70%,#c9c4b9 70%); }
+.wx-room > button { width:28%; height:320px; padding:20px; background:#f9f7f0; border:0; box-shadow:0 10px 20px #0002; }
+.wx-room img { height:230px; object-fit:contain; }
+.wx-room span { display:block; margin-top:18px; font-size:10px; }
+.wx-wall-left { transform:rotateY(35deg); }
+.wx-wall-right { transform:rotateY(-35deg); }
+.wx-inspection { border:1px solid #39383344; padding:24px; margin-top:24px; }
+.wx-inspection img { height:70vh; margin-top:20px; }
+/* 19 / A music machine with a real eight-step sequencer. */
+.wx[data-pattern="19"] { --paper:#1a2026; --ink:#e3e9c8; --accent:#c9e87b; --font:'Courier New',monospace; }
+.wx-sequence-image { max-width:700px; margin:0 auto 30px; background:#101518; padding:16px; }
+.wx-sequence-image img { height:360px; object-fit:contain; }
+.wx-sequencer { display:grid; grid-template-columns:repeat(8,1fr); gap:10px; max-width:900px; margin:auto; }
+.wx-sequencer button { height:48px; background:#2c353b; border-color:#e3e9c822; }
+.wx-sequencer button[aria-pressed="true"] { background:#c9e87b; box-shadow:inset 0 -5px #93ad52; }
+.wx-sequencer button.current { outline:2px solid #f5e5ae; outline-offset:2px; }
+/* 20 / A branching travelogue and its accumulated trail. */
+.wx[data-pattern="20"] { --paper:#e6eadf; --ink:#4c5e4e; --accent:#96634a; --font:Georgia,serif; }
+.wx-paths { display:grid; grid-template-columns:1fr 1fr; gap:40px; }
+.wx-paths > button { padding:0; border:0; }
+.wx-paths img { height:420px; object-fit:cover; }
+.wx-paths span { display:block; padding:18px; font-size:12px; letter-spacing:.18em; }
+.wx-trail { display:grid; grid-template-columns:repeat(8,minmax(0,1fr)); gap:10px; margin-top:40px; }
+.wx-trail figure { margin:0; }
+.wx-trail img { height:100px; object-fit:cover; }
+.wx-trail figcaption { font:10px monospace; padding-top:6px; }
+.wx-journey-title { grid-column:1/-1; font-size:clamp(36px,9vw,130px); font-weight:400; letter-spacing:-.06em; overflow-wrap:anywhere; }
+/* 99 / Arcade cabinet. No gallery images are requested by this world. */
+.wx[data-pattern="99"] { --paper:#0d1120; --ink:#d3e0f8; --accent:#9adfdb; --font:'Courier New',monospace; background-image:radial-gradient(at 50% 30%,#28344d,transparent 70%); }
+.wx[data-pattern="99"] .wx-stage { max-width:750px; }
+.wx-tetris { display:grid; grid-template-columns:minmax(0,300px) 120px; gap:24px; justify-content:center; outline-offset:8px; }
+.wx-tetris-field { position:relative; border:1px solid #d3e0f833; }
+.wx-tetris-field > canvas { display:block; width:100%; height:auto; }
+.wx-tetris-side { display:flex; flex-direction:column; gap:6px; }
+.wx-tetris-side strong { font-size:22px; letter-spacing:.06em; margin-bottom:12px; }
+.wx-tetris-side canvas { max-width:100%; height:auto; }
+.wx-tetris-overlay { position:absolute; inset:0; display:grid; place-items:center; background:#0d1120bb; font-size:28px; letter-spacing:.06em; }
+.wx[data-pattern="99"] .wx-controls { justify-content:center; margin-top:24px; }
+@media (max-width:900px) {
+    .wx-contact { grid-template-columns:repeat(3,minmax(0,1fr)); }
+    .wx-observatory { gap:20px; }
+    .wx-reels { gap:12px; }
+    .wx-reel img { height:260px; }
+}
+@media (max-width:600px) {
+    .wx { padding:18px; }
+    .wx-mast { gap:18px; }
+    .wx-select { width:100%; }
+    .wx-controls { gap:8px; }
+    .wx-button { min-height:42px; padding:10px 12px; }
+    .wx-slider { width:100%; justify-content:space-between; }
+    .wx-slider input { flex:1; max-width:230px; }
+    .wx[data-pattern="2"] .wx-stage { grid-template-columns:1fr; }
+    .wx-playlist { max-height:260px; }
+    .wx-orbit-view { height:500px; }
+    .wx-orbit-card { width:180px; }
+    .wx-orbit-card img { height:220px; }
+    .wx-desktop { height:500px; }
+    .wx-window img { height:240px; }
+    .wx-terminal-screen img { height:300px; }
+    .wx-contact { grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+    .wx-contact-card img { height:130px; }
+    .wx-look img { height:58vh; }
+    .wx-atlas-view { height:550px; }
+    .wx-memory { grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+    .wx-memory > button { aspect-ratio:1; }
+    .wx-darkroom { padding:12px; }
+    .wx-time-frame { flex-basis:85vw; }
+    .wx-time-frame img { height:300px; }
+    .wx-sheet { padding:16px; }
+    .wx-sheet:nth-child(even) { padding-top:60px; }
+    .wx-sheet img { height:230px; }
+    .wx-observatory { grid-template-columns:1fr; }
+    .wx-star-detail { border:0; padding:0; }
+    .wx-sky button { min-height:26px; padding:2px; }
+    .wx-reels { grid-template-columns:1fr; }
+    .wx-reel img { height:260px; }
+    .wx-typesheet { padding:16px; }
+    .wx-type-word { font-size:min(var(--type-size),22vw); }
+    .wx-room { height:390px; gap:8px; }
+    .wx-room > button { width:31%; height:230px; padding:8px; }
+    .wx-room img { height:150px; }
+    .wx-sequencer { gap:6px; }
+    .wx-sequencer button { padding:0; min-height:36px; height:40px; }
+    .wx-paths { gap:16px; }
+    .wx-paths img { height:300px; }
+    .wx-paths span { font-size:9px; padding:12px 0; }
+    .wx-trail { grid-template-columns:repeat(4,minmax(0,1fr)); }
+    .wx-tetris { grid-template-columns:minmax(0,260px) 76px; gap:12px; }
+    .wx-tetris-side strong { font-size:16px; }
+    .wx-tetris-side .wx-micro { font-size:9px; }
+    .wx-tetris-overlay { font-size:22px; }
+}
+@media (prefers-reduced-motion:reduce) {
+    .wx *, .wx *::before, .wx *::after { animation:none !important; transition:none !important; scroll-behavior:auto !important; }
+}
+/* 88 / Darkness is the stage. Only the selector and home clock remain outside. */
+.wx[data-pattern="88"] { --paper:#030405; --ink:#c8cbd0; --accent:#99bce9; --font:'Courier New',monospace; background:#030405; }
+.wx[data-pattern="88"] .wx-mast { border:0; justify-content:flex-end; margin-bottom:0; padding-top:0; }
+.wx[data-pattern="88"] .wx-select { color:#9ba2ad; border-color:#292d35; }
+.dr-shell { max-width:760px; margin:24px auto 60px; }
+.dr-setup { max-width:520px; margin:auto; padding:clamp(12px,5vh,65px) 0; }
+.dr-title { font-family:'Helvetica Neue',Arial,sans-serif; font-size:clamp(48px,10vw,104px); font-weight:300; line-height:1.15; letter-spacing:-.045em; text-align:center; margin:0 0 32px; position:relative; white-space:nowrap; }
+.dr-rules { white-space:pre-wrap; overflow-wrap:anywhere; border-block:1px solid #ffffff18; padding:14px 0; margin:0 0 28px; font:12px/2 Arial,sans-serif; color:#aeb5bf; }
+.dr-setting { display:grid; grid-template-columns:minmax(0,1fr) 90px 64px minmax(0,1fr); align-items:center; gap:12px; margin:20px 0; font:12px/1.6 Arial,sans-serif; }
+.dr-setting > label { text-align:right; overflow-wrap:anywhere; }
+.dr-setting select { width:100%; color:#eee; background:#0d1014; border:1px solid #4e5562; border-radius:0; padding:12px; font:16px monospace; }
+.dr-setting select:disabled { opacity:1; color:#969fac; border-style:dashed; }
+.dr-setting .wx-button { padding:10px 4px; min-height:44px; white-space:nowrap; }
+.dr-setting .wx-button:focus-visible { outline:1px solid currentColor; outline-offset:2px; }
+.dr-setting-control .wx-button { grid-column:2 / 4; width:100%; padding-inline:8px; white-space:normal; overflow-wrap:anywhere; }
+.dr-start { display:block; min-width:160px; margin:32px auto 0; padding:16px; }
+.dr-game { padding-top:clamp(20px,7vh,80px); }
+.dr-hud { display:flex; justify-content:center; flex-wrap:wrap; gap:16px 30px; color:#a2a9b3; font:12px/1.7 'Courier New',monospace; }
+.dr-hud > div { display:flex; gap:10px; align-items:baseline; }
+.dr-hud span { font-size:10px; letter-spacing:.13em; }
+.dr-hud strong { font-size:14px; font-weight:400; font-variant-numeric:tabular-nums; }
+.dr-message { min-height:4.5em; margin:24px 0; text-align:center; white-space:pre-line; font:14px/2 Arial,sans-serif; }
+.dr-commands { flex-wrap:nowrap; gap:12px; }
+.dr-commands button { flex:1; min-width:0; min-height:52px; }
+.dr-log { list-style:none; padding:14px 0; margin:24px 0; max-height:300px; min-height:100px; overflow:auto; border-block:1px solid #ffffff18; color:#aeb5bf; font:12px/2.4 'Courier New',monospace; font-variant-numeric:tabular-nums; }
+.dr-log li { white-space:pre; width:max-content; min-width:100%; }
+.dr-plus { color:#85b8fa; }.dr-minus { color:#f29393; }.dr-neutral { color:#afb5bf; }
+.dr-end-controls { justify-content:center; }
+.dr-end-controls button { min-height:48px; }
+.dr-reward { position:relative; margin:30px 0 0; animation:dr-emerge 1.8s ease-out both; }
+.dr-reward img { max-height:75vh; object-fit:contain; }
+.dr-reward figcaption { position:absolute; bottom:0; left:0; right:0; padding:14px; background:#000a; color:#fff; font:clamp(10px,2vw,13px)/1.6 monospace; overflow-wrap:anywhere; }
+.dr-photo-fallback { padding:60px 20px; font:12px/2 Arial,sans-serif; }
+.dr-record { margin:24px 0; padding:20px 0; border-block:1px solid #ffffff18; font:12px/1.8 'Courier New',monospace; color:#aeb5bf; }
+@keyframes dr-emerge { from { opacity:0; } to { opacity:1; } }
+@media(max-width:600px) {
+    .dr-shell { margin-top:24px; }
+    .dr-setting { grid-template-columns:minmax(0,1fr) 80px 56px minmax(0,1fr); gap:8px; }
+    .dr-commands { gap:8px; }
+    .dr-commands button { padding-inline:8px; }
+    .dr-log { font-size:11px; }
+    .dr-game { padding-top:28px; }
+}
+
+/* A scrollable desktop preserves room for arranging windows on small screens. */
+.wx-desktop-viewport { height:600px; overflow:auto; position:relative; border:1px solid #ffffff88; }
+.wx-desktop-viewport .wx-desktop { min-width:900px; height:750px; border:0; }
+/* Page turns pivot around the binding; four compositions vary type and images. */
+.wx-book { position:relative; perspective:1600px; isolation:isolate; }
+.wx-book > .wx-sheet { height:620px; display:flex; flex-direction:column; justify-content:space-between; overflow:hidden; }
+.wx-book .wx-sheet img { min-height:0; flex:1; width:100%; object-fit:contain; }
+.wx-book .wx-sheet[data-layout="1"] { padding-top:70px; }
+.wx-sheet[data-layout="1"] h2 { order:2; margin:20px 0 0; text-align:right; }
+.wx-sheet[data-layout="1"] p { order:3; }
+.wx-book .wx-sheet[data-layout="2"] { padding-top:35px; }
+.wx-sheet[data-layout="2"] img { width:80%; align-self:flex-end; }
+.wx-sheet[data-layout="2"] h2 { font-style:italic; }
+.wx-book .wx-sheet[data-layout="3"] { padding-top:100px; }
+.wx-sheet[data-layout="3"] h2 { font:700 clamp(22px,3vw,48px)/1 Arial,sans-serif; letter-spacing:-.06em; }
+.wx-book > .wx-turn-leaf { position:absolute; top:0; width:50%; z-index:3; pointer-events:none; backface-visibility:hidden; box-shadow:0 8px 25px #0003; }
+.wx-turn-leaf[data-direction="next"] { right:0; transform-origin:left center; animation:wx-turn-next .7s ease-in-out both; }
+.wx-turn-leaf[data-direction="previous"] { left:0; transform-origin:right center; animation:wx-turn-previous .7s ease-in-out both; }
+@keyframes wx-turn-next { from{transform:rotateY(0);} to{transform:rotateY(-180deg);} }
+@keyframes wx-turn-previous { from{transform:rotateY(0);} to{transform:rotateY(180deg);} }
+.wx-sky-viewport { min-width:0; overflow:hidden; touch-action:pan-y; position:relative; isolation:isolate; }
+.wx-sky-viewport .wx-sky { touch-action:pan-y; }
+@media(max-width:600px){
+    .wx-desktop-viewport { height:520px; }
+    .wx-desktop-viewport .wx-window { width:260px; }
+    .wx-desktop-viewport .wx-window img { height:220px; }
+    .wx-book > .wx-sheet { height:430px; padding:14px; }
+    .wx-book .wx-sheet[data-layout="1"] { padding-top:45px; }
+    .wx-book .wx-sheet[data-layout="3"] { padding-top:65px; }
+    .wx-book .wx-sheet h2 { font-size:clamp(19px,5vw,30px); }
+}
+.wx-book { touch-action:pan-y; }
+.wx-zine-jump { display:flex; gap:10px; overflow-x:auto; padding:18px 4px; margin-top:20px; }
+.wx-zine-jump > button { flex:0 0 76px; padding:5px; border-color:#28272444; }
+.wx-zine-jump img { height:55px; object-fit:cover; }
+.wx-zine-jump span { display:block; padding:6px 0 0; font-size:10px; }
+.wx-zine-jump [aria-current="page"] { border:2px solid var(--accent); background:#ffffff77; }
+/* Secret is an independent, full-viewport space. The home clock floats above it. */
+body.secret-active { background:#030405; }
+body.secret-active .site-main { max-width:none; padding:0; margin:0; min-height:100svh; }
+.secret-home { position:fixed; top:0; left:0; z-index:70; padding:calc(16px + env(safe-area-inset-top)) 22px 12px; color:#fff; mix-blend-mode:difference; pointer-events:none; }
+.secret-home .site-brand { pointer-events:auto; display:inline-block; font-size:18px; }
+body.secret-active .wx { min-height:100svh; padding-top:calc(80px + env(safe-area-inset-top)); }
+body.secret-active .page-special-gallery[data-state="gate"] { min-height:100svh; background:#030405; color:#d7dbe2; padding:90px 24px 40px; }
+body.secret-active .special-gallery-gate { min-height:calc(100svh - 130px); color:inherit; }
+body.secret-active .special-gallery-gate .info-heading,
+body.secret-active .special-gallery-gate .info-paragraph { color:inherit; }
+body.secret-active .special-gallery-form input { background:#15171c; color:#fff; border-color:#575e6b; }
+body.secret-active .special-gallery-error { color:#f29393; }
+body.secret-active .cursor-layer { display:none; }
+
+.dr-record-console { margin:0; font:12px/1.9 "Courier New", "Noto Sans Mono CJK JP", "MS Gothic", monospace; white-space:pre; overflow-x:auto; }
+
+/* Five restrained title identities. No full-screen flashing. */
+.dr-title[data-effect="0"] { font-family:'Helvetica Neue',Arial,sans-serif; font-weight:300; }
+.dr-title[data-effect="1"] { font-family:Georgia,'Times New Roman',serif; font-weight:400; letter-spacing:.04em; }
+.dr-title[data-effect="1"] span { display:inline-block; animation:dr-breathe 5s ease-in-out infinite; }
+.dr-title[data-effect="2"] { font-family:'Courier New',monospace; font-weight:700; letter-spacing:-.065em; }
+.dr-title[data-effect="2"] span { display:inline-block; animation:dr-glitch 6s steps(1,end) infinite; }
+.dr-title[data-effect="3"] { font-family:'Courier New',monospace; font-weight:400; letter-spacing:.02em; }
+.dr-title[data-effect="4"] { font-family:Didot,'Times New Roman',serif; font-weight:400; font-style:italic; }
+.dr-title[data-effect="4"] span { display:inline-block; animation:dr-echo 7s ease-in-out infinite; }
+@keyframes dr-breathe { 0%,100% { opacity:.6; } 50% { opacity:1; } }
+@keyframes dr-glitch {
+    0%,91%,97%,100% { transform:none; text-shadow:none; }
+    92%,95% { transform:translateX(-1px); text-shadow:2px 0 #8aa8bf66,-2px 0 #b0919866; }
+    93%,96% { transform:translateX(1px); text-shadow:-2px 0 #8aa8bf66,2px 0 #b0919866; }
+}
+@keyframes dr-echo { 0%,100% { text-shadow:0 0 0 transparent; opacity:.75; } 50% { text-shadow:6px 0 9px #bbc7d333; opacity:1; } }
+
+.dr-title .dr-title-probe { position:absolute; visibility:hidden; pointer-events:none; display:block; width:max-content; font-size:clamp(48px,10vw,104px); animation:none; white-space:nowrap; }

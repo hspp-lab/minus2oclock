@@ -6,6 +6,7 @@
 // - サイト演出（animation_type / power / enable）は body の data 属性経由で CSS に伝える
 // =============================================================================
 import { siteSettings } from "../settings.js";
+import { mountWorld } from "./worlds.js";
 
 // -----------------------------------------------------------------------------
 // ユーティリティ
@@ -262,6 +263,13 @@ function buildHeader(settings, pages, currentParam) {
     header.appendChild(brand);
     renderSiteName(brand, settings, settings.index.effect);
 
+    // Secret keeps only the animated home mark; no navigation bar is created.
+    if (pages[currentParam]?.def?.pagetype === 2) {
+        header.className = "secret-home";
+        brand.setAttribute("aria-label", "トップへ戻る");
+        return header;
+    }
+
     // ナビ（カテゴリ名クリックで子メニューを開閉するドロップダウン）
     const nav = document.createElement("nav");
     nav.className = "site-nav";
@@ -516,6 +524,95 @@ function buildGalleryOverview(def) {
     });
 
     section.appendChild(grid);
+    return section;
+}
+
+// 有効な通常ギャラリーの原寸画像だけを集める。ov / vw は生成しない。
+function collectSpecialGalleryFiles(settings) {
+    const files = [];
+    const gallery = settings.index.menu.gallery || {};
+    for (const key of Object.keys(gallery)) {
+        const def = gallery[key];
+        if (!def || def.enabled !== 1 || def.pagetype !== 0) continue;
+        if (!def.imgparentfoldername || !def.imgfromto) continue;
+        files.push(...buildImageList(def.imgfromto, def.imgparentfoldername));
+    }
+    return files;
+}
+
+let specialGalleryUnlocked = false;
+let specialGalleryPatternOverride = null;
+let lastRenderedParam = null;
+
+let disposeWorld = null;
+
+function buildSpecialGallery(settings, def) {
+    const section = document.createElement("section");
+    section.className = "page page-special-gallery";
+    const config = settings.index.menu.information?.special_gallery || def || {};
+
+    if (!specialGalleryUnlocked) {
+        section.dataset.state = "gate";
+        const gate = document.createElement("div");
+        gate.className = "special-gallery-gate anim-item";
+
+        const heading = document.createElement("h1");
+        heading.className = "info-heading";
+        heading.textContent = config.heading || "Special Gallery";
+        gate.appendChild(heading);
+
+        const description = document.createElement("p");
+        description.className = "info-paragraph special-gallery-description";
+        description.textContent = config.description || "Enter the password to open this edition.";
+        gate.appendChild(description);
+
+        const form = document.createElement("form");
+        form.className = "special-gallery-form";
+        const input = document.createElement("input");
+        input.type = "password";
+        input.name = "password";
+        input.autocomplete = "current-password";
+        input.placeholder = config.placeholder || "password";
+        input.setAttribute("aria-label", "password");
+        const submit = document.createElement("button");
+        submit.type = "submit";
+        submit.textContent = config.submit_label || "OPEN";
+        const error = document.createElement("p");
+        error.className = "special-gallery-error";
+        error.setAttribute("role", "alert");
+
+        form.appendChild(input);
+        form.appendChild(submit);
+        form.appendChild(error);
+        form.addEventListener("submit", (event) => {
+            event.preventDefault();
+            const value = input.value;
+            // パスワードは設定値との完全一致のみ。体験の選択は入場後に行う。
+            if (value === String(config.password ?? "")) {
+                specialGalleryPatternOverride = null;
+                specialGalleryUnlocked = true;
+                render();
+                return;
+            }
+            error.textContent = config.error_message || "Password does not match.";
+            input.select();
+        });
+        gate.appendChild(form);
+        section.appendChild(gate);
+        requestAnimationFrame(() => input.focus());
+        return section;
+    }
+
+    const pattern = specialGalleryPatternOverride ?? 1;
+    section.dataset.state = "world";
+    section.dataset.pattern = String(pattern);
+
+    const files = pattern === 99 ? [] : collectSpecialGalleryFiles(settings);
+    disposeWorld = mountWorld(section, pattern, files, next => {
+        specialGalleryPatternOverride = next;
+        render();
+        window.scrollTo(0, 0);
+    }, config.pages);
     return section;
 }
 
@@ -1243,11 +1340,19 @@ function getCurrentParam() {
 }
 
 function render() {
+    if (disposeWorld) { disposeWorld(); disposeWorld = null; }
     const app = document.getElementById("app");
     const settings = siteSettings;
     const effect = settings.index.effect;
     const pages = collectPages(settings);
     const param = getCurrentParam();
+
+    // 特別空間へ再入場したときは、前回の認証状態を引き継がない。
+    if (param !== lastRenderedParam && param && pages[param]?.def?.pagetype === 2) {
+        specialGalleryUnlocked = false;
+        specialGalleryPatternOverride = null;
+    }
+    lastRenderedParam = param;
 
     // タイトル
     document.title = settings.site_info.site_name;
@@ -1260,6 +1365,9 @@ function render() {
         if (def.pagetype === 0) {
             scope = "overview";
             content = buildGalleryOverview(def);
+        } else if (def.pagetype === 2) {
+            scope = "information";
+            content = buildSpecialGallery(settings, def);
         } else {
             scope = "information";
             content = buildInformation(key, def);
@@ -1270,8 +1378,14 @@ function render() {
     }
 
     // 演出属性・タイプ別演出を適用
-    applyEffectAttributes(effect, scope);
-    setupTypeEffects(effect, scope);
+    const secretActive = pages[param]?.def?.pagetype === 2;
+    document.body.classList.toggle("secret-active", secretActive);
+    const worldActive = content.dataset.state === "world";
+    document.body.classList.toggle("world-active", worldActive);
+    // Each world owns its motion; global distortion must not transform its photos.
+    const pageEffect = worldActive ? { ...effect, animation_type: 0, animation_power: 0 } : effect;
+    applyEffectAttributes(pageEffect, scope);
+    setupTypeEffects(pageEffect, scope);
 
     // body 背景スライドショーはトップページのときだけ起動。他ページでは停止・撤去。
     // プリロードが済むまでは起動しない（初期化フローが完了後に render を再実行する）。
@@ -1290,7 +1404,7 @@ function render() {
     main.appendChild(content);
     app.appendChild(main);
 
-    app.appendChild(buildFooter(settings));
+    if (!secretActive) app.appendChild(buildFooter(settings));
 
     // アイテム出現監視
     observeAnimItems(app);
