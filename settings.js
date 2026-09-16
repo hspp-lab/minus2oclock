@@ -365,6 +365,7 @@ export const siteSettings = {
                         heading: "Special Thanks",
                         names: [
                             // 以下を「 / 」区切りでテキストのみ表示。ページ見切れる場合は折り返す
+                            "[domain26]",
                             "くま",
                             "うた",
                             "gfxkavalan",
